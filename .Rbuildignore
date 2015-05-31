@@ -1,0 +1,11 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^.*\.Rdata$
+\.Rhistory$
+\.Rprofile$
+^.*\.tar.gz$
+^.*\.zip$
+.gitignore
+.git/*
+.README.md
+desktop.ini
