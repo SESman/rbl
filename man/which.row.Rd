@@ -12,6 +12,9 @@ which.row(x, obj = ind())
 \description{
 from time stamp to row number
 }
+\details{
+assumes that TDR data is sorted by time.
+}
 \examples{
 data(exses)
 ind(exses)

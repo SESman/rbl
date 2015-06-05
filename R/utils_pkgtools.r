@@ -3,13 +3,16 @@
 #' @param x a POSIXct vector
 #' @export
 #' @keywords internal
+#' @details assumes that TDR data is sorted by time.
 #' @examples 
 #' data(exses)
 #' ind(exses)
 #' x <- sample(1:nrow(exses$tdr), 100)
 #' identical(which.row(exses$tdr$time[x]), x)
 which.row <- function(x, obj = ind()) {
-  sapply(x, function(x) which(obj$tdr$time == x))
+  obj$tdr <- data.table(obj$tdr, key = "time")
+  out <- obj$tdr[ , .I[time %in% x]]
+  out[order(order(x))]
 }
 
 #' Find to which specific dive/surface a instant belongs to
