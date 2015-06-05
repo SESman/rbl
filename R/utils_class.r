@@ -72,3 +72,13 @@ as.tdr <- function(x) {
   class(x) <- c("tdr", "data.frame")
   x
 }
+
+#' @rdname as.ses
+#' @details \code{as.stat} coerces an object to class \code{stat}.
+#' @keywords internal
+#' @export
+as.stat <- function(x) {
+  x <- as.data.frame(x)
+  class(x) <- c("stat", "data.frame")
+  x
+}

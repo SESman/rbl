@@ -2,6 +2,7 @@
 % Please edit documentation in R/utils_class.r
 \name{as.ses}
 \alias{as.ses}
+\alias{as.stat}
 \alias{as.tdr}
 \alias{is.ses}
 \alias{is.stat}
@@ -17,6 +18,8 @@ is.tdr(x)
 is.stat(x)
 
 as.tdr(x)
+
+as.stat(x)
 }
 \arguments{
 \item{...}{Elements to group into an 'ses' object.}
@@ -45,6 +48,8 @@ object should contain:
 
 \code{as.tdr} coerces an object to class \code{tdr}. A TDR table should
 contain at least columns time and depth in that order.
+
+\code{as.stat} coerces an object to class \code{stat}.
 }
 \examples{
 new.ses <- list(name = "Example", tdr = data.frame(), stat = data.frame())
