@@ -52,16 +52,18 @@ wiggles <- function(x, y = NULL, thres.depth = 2, thres.dur = c(5, 300), plt = F
 #' Compute straightness index
 #' 
 #' \code{straightness} compute a straightness index between 0 and 1 by making the 
-#' ration \code{L / l} where \code{L} is the cumulated distance between points and 
-#' and where \code{l} the cumulated distance between each \code{y} data points.
+#' ration \code{L / l} where \code{L} is the cumulated distance between 
+#' brokenstick points and and where \code{l} the cumulated distance between 
+#' each \code{y} data points.
 #' 
 #' @param x The x data (time).
 #' @param y The y data (depth).
 #' @param npts The number of points to use. 2 is the minimum (from the start 
 #' to the end of data). Each new point adds a step (using the \code{\link{brokenstick}} 
-#' algorithm) wich is taken into account when computing \code{L}. 3 is the default 
-#' as it is used to compute the straightness in the bottom of dives.
-#' @return A number between 0 (maximum sinuosity) to 1 (maximum straightness).
+#' algorithm) which is taken into account when computing \code{L}.
+#' @return \code{straightness} returns a number between 0 (maximum sinuosity) 
+#' to 1 (maximum straightness). \code{sinuosity} is equivalent to 
+#' \code{1 / straightness}.
 #' @export
 #' @keywords behavior
 #' @examples
@@ -73,6 +75,12 @@ straightness <- function(x, y = NULL, npts = 3) {
   L <- sum(abs(diff(bsm$data[bsm$pts, 2])))
   l <- sum(abs(diff(bsm$data[ , 2])))
   L / l
+}
+
+#' @rdname straightness
+#' @export
+sinuosity <- function(x, y = NULL, pts = 3) {
+  1 / straightness(x, y, pts)
 }
 
 #' Shannon entropy index on time at depth proportions

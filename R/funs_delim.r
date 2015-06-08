@@ -39,7 +39,7 @@ time_reso <- function(x, n = 10, type = c('period', 'frequence')) {
 #' attr(dvs, 'thres.depth')
 #' attr(dvs, 'thres.dur')
 dive_delim <- function(obj, nms = c('time', 'depth'), thres.dur = 300, thres.depth = 15, 
-                    warn = TRUE, ...) {
+                       warn = TRUE, ...) {
   UseMethod('dive_delim')
 }
 
@@ -47,7 +47,7 @@ dive_delim <- function(obj, nms = c('time', 'depth'), thres.dur = 300, thres.dep
 #' @export
 #' @keywords internal
 dive_delim.default <- function(obj, nms = c('time', 'depth'), thres.dur = 300, 
-                            thres.depth = 15, warn = TRUE, ...) {
+                               thres.depth = 15, warn = TRUE, ...) {
   tm <- nms[1] ; dp <- nms[2]
   obj[ , tm] <- as.numeric(obj[ , tm])
   
@@ -99,14 +99,14 @@ dive_delim.default <- function(obj, nms = c('time', 'depth'), thres.dur = 300,
 #' @export
 #' @keywords internal
 dive_delim.ses <- function(obj, nms = c('time', 'depth'), thres.dur = 300, 
-                        thres.depth = 15, warn = TRUE, ...) {
+                           thres.depth = 15, warn = TRUE, ...) {
   if ('delim' %in% names(obj)) {
     dvs <- obj$delim
     warnCol <- `if`('warning' %in% dvs, which(names(dvs) == 'warning'), NULL)
     return(dvs[ , c(1:3, warnCol)])
   }
   dive_delim.default(obj, nms = c('time', 'depth'), thres.dur = 300, 
-                  thres.depth = 15, warn = TRUE, ...)
+                     thres.depth = 15, warn = TRUE, ...)
 }
 
 #' Find the dives' bottom start and end
@@ -124,7 +124,7 @@ dive_delim.ses <- function(obj, nms = c('time', 'depth'), thres.dur = 300,
 #' data(exses)
 #' dvs <- bottom_delim(exses$tdr)
 bottom_delim <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
-                     min.depth = 0.4, ...) {
+                         min.depth = 0.4, ...) {
   UseMethod('bottom_delim')
 }
 
@@ -132,7 +132,7 @@ bottom_delim <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12,
 #' @export
 #' @keywords internal
 bottom_delim.default <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
-                             min.depth = 0.4, ...) {
+                                 min.depth = 0.4, ...) {
   dvs <- dive_delim(obj, nms, ...)
   dv_attr_nms <- c('thres.depth', 'thres.dur', 'ignored_dives')
   dv_attr <- attributes(dvs)[dv_attr_nms]
@@ -200,19 +200,19 @@ bottom_delim.default <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9,
 #' @export
 #' @keywords internal
 bottom_delim.ses <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
-                         min.depth = 0.4, ...) {
+                             min.depth = 0.4, ...) {
   if ('delim' %in% names(obj))
     return(obj$delim)
   bottom_delim.default(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
-                   min.depth = 0.4, ...)
+                       min.depth = 0.4, ...)
 }
 
-#' Find drift dives using hight-resolution TDR data
+#' Use brokensticks to identify potential drifts
 #' 
-#' \code{find_drift_tdr} takes an object and return a data frame with all the brokenstick 
+#' \code{drift_stat} takes an object and return a data frame of all the brokenstick 
 #' segments along the trip with statistics such as their vertical speed (average 
-#' and standard deviation), their duration and so on. This data frame is to be used to 
-#' identify the drift segments manually (see examples for an example of method).
+#' and standard deviation), their duration and so on. This data frame is to be 
+#' filtered to identify drift segments.
 #' 
 #' @param object a \code{SES} object including a TDR dataset, a "dives statistics" 
 #' table and a "delim" table.
@@ -221,106 +221,116 @@ bottom_delim.ses <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w =
 #' @param bsm A list of brokenstick models to use directly instead of computing a 
 #' new one with \code{thres.bsm} as parameter.
 #' @export
+#' @return A data frame of all brokenstick segments with start and end index of 
+#' the segment, no_seg_tot and ID number of the segement, no_seg_dive the number 
+#' of the segment within its dive, no_dive the ID of the dive conataining the segment, 
+#' time the starting time of segement, drift_rate the vertical speed of the segment, 
+#' dur the duration of the segment, min_depth and max_depth the minimum and maximum 
+#' depths of the segment, acceleration statistics (if acceleration data available) 
+#' average roll, pitch and swimming effort and PCA rate, the mean squared residuals 
+#' of the segment.
+#' @details To get average pitch and roll angles (degrees), the TDR table must include 
+#' static acceleration with variable names "axG", "ayG" and "azG". Similarly, for 
+#' swimming effort and PCA rate, the TDR table must have columns "swm_eff" (numeric) 
+#' and "is_pca" (logical). Use functions \code{\link{static_acc}}, 
+#' \code{\link{swimming_effort}} and \code{\link{prey_catch_attempts}} to compute 
+#' these variables from the raw acceleration readings.
 #' @keywords drift
 #' @examples
 #' data(exses)
-#' tab <- find_drift_tdr(exses)
+#' tab <- drift_stat(exses)
 #' 
 #' \dontrun{
-#' # The main criterion is the duration of segments. Then the R2 and the average vertical speed.
 #' require(manipulate)
 #' manipulate(
 #' {
-#'  cnd <- tab$bsm_r2 >= r2 & tab$dur >= dur * 60 & abs(tab$bsm_slope) <= slope
-#'  cnd <- ifelse(is.na(cnd), FALSE, cnd)
-#'  plot(bsm_slope ~ time, tab[cnd, ], xlim = range(tab$time), ylim = c(-0.8, 0.8))
+#' tab$day <- floorPOSIXct(tab$time)
+#'  cnd <- tab$dur >= dur * 60 & 
+#'         abs(tab$drift_rate) <= rate & 
+#'         tab$swm_eff <= swm_eff &
+#'         abs(tab$pitch) <= pitch
+#'  cnd <- "if"(no_pca, cnd & tab$pca_rate == 0, cnd)
+#'  belly_up <- abs(tab$roll) >= 90
+#'  if (up_only) cnd <- cnd & belly_up
+#'  na_cnd <- is.na(cnd)
+#'  cnd <- ifelse(is.na(cnd), TRUE, cnd)
+#'  pts_col <- ifelse(belly_up[cnd], "red", "black")
+#'  pts_col <- ifelse(na_cnd, "blue", pts_col)
+#'  pts_shape <- ifelse(na_cnd, 20, 1)
+#'  plot(drift_rate ~ time, tab[cnd, ], col = pts_col, pch = pts_shape, 
+#'       xlim = range(tab$time), ylim = c(-3, 3))
 #'  abline(h = 0, col = 'gray')
 #' },
-#'  r2 = slider(.95, 1, initial = .99, step = 0.0005, label = "bsm R^2"), 
-#'  dur = slider(0, 30, initial = 5, step = 0.25, label = "Duration (minutes)"), 
-#'  slope = slider(0, 4, initial = 0.6, step = 0.05, label = "Max. vertical speed (m/s)")
+#'  dur = slider(0, 30, initial = 2, step = 0.25, label = "Duration (minutes)"), 
+#'  rate = slider(0, 3, initial = 3, step = 0.05, label = "Max. vertical speed (m/s)"),
+#'  swm_eff = slider(0, 2.5, initial = 2.5, step = .01, label = "Max. swimming effort (m/s³)"),
+#'  pitch = slider(0, 90, initial = 90 , step = 5, label = "Max pitch angle (deg)"), 
+#'  up_only = checkbox(FALSE, label = "Show belly up only"), 
+#'  no_pca = checkbox(FALSE, label = "Show no PCA only")
 #' )
 #' 
 #' # Drift dive example
 #' tdrply(plot, 1:2, no = 300, type = 'l', obj = exses)
 #' }
-find_drift_tdr <- function(object, thres.bsm = 5, bsm = NULL) {
+drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   if (is.null(bsm))
     bsm <- tdrply(optBrokenstick, 1:2, cost = max_dist_cost, 
                   threshold = thres.bsm, obj = object)
-  bsm_coef <- lapply(bsm, function(x) coef(x))
-  n_seg    <- sapply(bsm_coef, nrow)
-  coef_a   <- unlist(lapply(bsm_coef, function(x) x[ , 1]))
-  coef_b   <- unlist(lapply(bsm_coef, function(x) x[ , 2]))
   
-  bsm_rawidx <- df_search(lapply(bsm, function(x) x$pts))
-  bsm_idx  <- df_search(Map(function(x, offset) x$pts + offset, bsm, 
-                            offset = sapply(ty_delim(obj = object), function(x) x[1, 1]) - 1))
-  seg_tab           <- as.data.frame(data.table::rbindlist(bsm_idx, use.names = FALSE))
-  seg_tab$dur       <- apply(seg_tab, 1, diff) * time_reso(object$tdr[ , 1])
-  seg_tab$bsm_slope <- coef_b
-  seg_tab$no_dive   <- rep(numIn(bsm, TRUE), n_seg)
-  seg_tab$time      <- object$tdr$time[seg_tab[ , 1]]
-  seg_tab$min_depth <- mapply(function(st, ed) min(object$tdr[st:ed, 2]), 
-                              seg_tab[ , 1], seg_tab[ , 2])
-  seg_tab$max_depth <- mapply(function(st, ed) max(object$tdr[st:ed, 2]), 
-                              seg_tab[ , 1], seg_tab[ , 2])
-  seg_tab$bsm_msr   <- unlist(Map(function(x, df) Map(function(st, ed) mean((x$resid^2)[st:ed], na.rm = TRUE), 
-                                                      st = df$V1, ed = df$V2), bsm, bsm_rawidx))
+  # Compute basic stats of each segment
+  bsm_df <- as.data.frame(rbindlist(lapply(bsm, as.data.frame)))
+  bsm_df$time <- as.POSIXct(bsm_df$st_tm, origin = "1970-01-01", tz = attr(object$tdr[ , 1], "tz"))
+  bsm_df$dur <- apply(bsm_df[ , 1:2], 1, diff.default)
+  bsm_df[ , 1:2] <- lapply(bsm_df[ , 1:2], which.row, obj = object)
+  bsm_df$no_seg_tot <- seq_along(bsm_df[ , 1])
+  bsm_df$no_dive <- which.dive(bsm_df$time, object)
+  bsm_df$min_depth <- tdrply(min, 2, ty = bsm_df[ , 1:2], obj = object)
+  bsm_df$max_depth <- tdrply(max, 2, ty = bsm_df[ , 1:2], obj = object)
   
-  bsm_var_res <- unlist(Map(function(x, df) Map(function(st, ed) var(x$resid[st:ed], na.rm = TRUE), 
-                                            st = df$V1, ed = df$V2), bsm, bsm_rawidx))
-  bsm_var_tot <- unlist(Map(function(x, df) Map(function(st, ed) var(x$data[st:ed, 2], na.rm = TRUE), 
-                                                st = df$V1, ed = df$V2), bsm, bsm_rawidx))
-  percent_res_var <- bsm_var_res / bsm_var_tot
-  seg_tab$bsm_r2    <- 1 - ifelse(percent_res_var > 1, NA, percent_res_var)
+  # Add "bsm fit" stats 
+  bsm_res <- lapply(bsm, residuals)
+  bsm_pts <- df_search(lapply(bsm, function(x) x$pts))
+  mean_squared_residuals <- function(res, pts) {
+    mapply(function(st, ed) mean(res[st:ed]^2), st = pts[ , 1], ed = pts[ ,2])
+  }
+  bsm_df$msr <- unlist(Map(mean_squared_residuals, bsm_res, bsm_pts))
   
-  names(seg_tab) <- c('st_idx', 'ed_idx', names(seg_tab[ , -(1:2)]))
-  seg_tab[ , c('st_idx','ed_idx', 'no_dive', 'time', 'bsm_slope', 
-               'dur', 'bsm_msr', 'min_depth', 'max_depth', 'bsm_r2')]
+  # If static acceleration available: add pitch and roll info
+  nms_acc <- c()
+  acc_cols <- c("ayG", "azG")
+  if (all(acc_cols %in% names(object$tdr))) {
+    roll <- atan2(object$tdr$ayG, object$tdr$azG)
+    roll <- roll - agl_mean(roll)
+    object$tdr$roll <- agl_rescale(roll)
+    bsm_df$roll <- tdrply(agl_mean, "roll", ty = bsm_df[ , 1:2], obj = object) * 180/pi
+    nms_acc <- "roll"
+  }
+  acc_cols <- c("axG", "ayG", "azG")
+  if (all(acc_cols %in% names(object$tdr))) {
+    object$tdr$pitch <- -atan(object$tdr$axG / sqrt(object$tdr$ayG^2 + object$tdr$azG^2))
+    bsm_df$pitch <- tdrply(agl_mean, "pitch", ty = bsm_df[ , 1:2], obj = object) * 180/pi
+    nms_acc <- c(nms_acc, "pitch")
+  }
+  # If swimming effort available: add swimming effort info
+  if ("swm_eff" %in% names(object$tdr)) {
+    bsm_df$swm_eff <- tdrply(mean, "swm_eff", ty = bsm_df[ , 1:2], obj = object)
+    nms_acc <- c(nms_acc, "swm_eff")
+  }
+  # If prey catch attempts available: pca rate info
+  if ("is_pca" %in% names(object$tdr)) {
+    bsm_df$pca_rate <- tdrply(function(x) nrow(subset(per(x), value == TRUE)), 
+                              "is_pca", ty = bsm_df[ , 1:2], obj = object) / bsm_df$dur
+    nms_acc <- c(nms_acc, "pca_rate")
+  }
+  
+  
+  # Set names
+  names(bsm_df) <- c("st_idx", "ed_idx", "no_seg_dive", "drift_rate", 
+                     "intercept", "time", "dur", "no_seg_tot", "no_dive", 
+                     "min_depth", "max_depth", "msr", nms_acc)
+  # Reorder columns
+  bsm_df[ , c("st_idx", "ed_idx", "no_seg_tot", "no_seg_dive", "no_dive", 
+              "time", "drift_rate", "dur", "min_depth", "max_depth", 
+              nms_acc, "msr")]
 }
 
-#' Find drift dives using roll angle from static accelerometry
-#' 
-#' @param object a "ses" object
-#' @param thres.roll threshold to apply to roll in order to discriminate 
-#' "on belly" and "on back" attitude
-#' @param thres.dur minimum duration for a continuous "on back" period to be 
-#' considered as a drifting period.
-#' @return A data frame one row per drift period with 
-#' the start/end indices (refering to TDR rows) of the drift periods, 
-#' dive number where the drifting period was observed, the starting time of the 
-#' drift and the corresponding drift rate (m/s).
-#' @export
-#' @keywords drift
-#' @examples 
-#' data(exses)
-#' tab <- find_drift_roll(exses)
-#' plot(drift_rate ~ time, tab, ylim = c(-0.8, 0.8))
-#' tdrply(plot, 1:2, no = sample(tab$no_dive, 1), obj = exses)
-find_drift_roll <- function (object, thres.roll = pi/2, thres.dur = 400) { #...
-  # Compute and center roll
-  acc_cols <- c("axG", "ayG", "azG")
-  roll <- atan2(object$tdr[ , acc_cols[2]], object$tdr[ , acc_cols[3]])
-  roll <- roll - mean(roll, na.rm = TRUE)
-  roll <-  atan2(sin(roll), cos(roll))
-  
-  # Apply roll threshold
-  tmp <- per(abs(roll) >= thres.roll)
-  
-  # Correct test assuming animal is more often on belly than on the back
-  ctrl <- diff(tapply(tmp$length, tmp$value, sum))
-  if (ctrl > 0) tmp$value <- !tmp$value
-  
-  # Apply duration threshold
-  tmp$value[tmp$length < thres.dur] <- FALSE
-  tmp <- per(rep(tmp$value, tmp$length))
-  tmp <- tmp[tmp$value, ]
-  
-  # Compute drift rate and pairing with dive numbers
-  slps <- tdrply(function(x) coef(brokenstick(x, npts = 2))[1, 2], 1:2, 
-                 ty = tmp[ , 1:2], obj = object)
-  tm <- object$tdr[tmp$st_idx, 1]
-  dvs <- which.dive(tm, object)
-  data.frame(tmp[ , 1:2], no_dive = dvs, time = tm, drift_rate = slps)
-}
