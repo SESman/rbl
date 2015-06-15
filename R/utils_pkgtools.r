@@ -1,3 +1,27 @@
+#' Angle average
+#' 
+#' @param x angle in radians.
+#' @keywords internal angle
+#' @export
+#' @examples 
+#' agl_mean(c(-pi, pi))
+agl_mean <- function(x) {
+  sinr <- sum(sin(x), na.rm = TRUE)
+  cosr <- sum(cos(x), na.rm = TRUE)
+  atan2(sinr, cosr)
+}
+
+#' Rescale angle to [-pi; pi]
+#' 
+#' @param x angle in radians.
+#' @keywords internal angle
+#' @export
+#' @examples 
+#' agl_rescale(5*pi / c(-4, 4))
+agl_rescale <- function(x) {
+  atan2(sin(x), cos(x))
+}
+
 #' from time stamp to row number
 #' 
 #' @param x a POSIXct vector
