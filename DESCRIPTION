@@ -12,9 +12,14 @@ Depends:
 Suggests:
     knitr,
     sp,
-    testthat
+    testthat,
+    manipulate
 Imports:
-    data.table
+    utils,
+    data.table, 
+    RcppRoll, 
+    signal, 
+    sqldf
 License: MIT + file LICENSE
 LazyData: true
 Roxygen: list(wrap = FALSE)
