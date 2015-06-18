@@ -2,15 +2,15 @@
 #' 
 #' @param x The time sequence.
 #' @param n the number of replicates to do.
-#' @param type Should the result be returned in seconds ('period') or hertz ('frequence') ?
+#' @param type Should the result be returned in seconds ("period") or hertz ("frequence") ?
 #' @keywords internal
 #' @export
-time_reso <- function(x, n = 10, type = c('period', 'frequence')) {
+time_reso <- function(x, n = 10, type = c("period", "frequence")) {
   iis <- sample(1:length(x), n, replace = FALSE)
   dT <- round(unlist(lapply(Map(seq, iis, iis + 3), function(I) diff(x[I]))))
   reso  <- median(dT)
   if (is.na(reso) | !all(dT == reso))
-    warning('Some missing time stamps were found. Check the dataset !')
+    warning("Some missing time stamps were found. Check the dataset !")
   switch(match.arg(type), period = reso, frequence = 1 / reso)
 }
 
@@ -35,19 +35,19 @@ time_reso <- function(x, n = 10, type = c('period', 'frequence')) {
 #' dvs <- dive_delim(exses$tdr)
 #' 
 #' # Processing info
-#' unique(dvs$warning)
-#' attr(dvs, 'thres.depth')
-#' attr(dvs, 'thres.dur')
-dive_delim <- function(obj, nms = c('time', 'depth'), thres.dur = 300, thres.depth = 15, 
+#' table(dvs$warning)
+#' attr(dvs, "thres.depth")
+#' attr(dvs, "thres.dur")
+dive_delim <- function(obj, nms = c("time", "depth"), thres.dur = 300, thres.depth = 15, 
                        warn = TRUE, ...) {
-  UseMethod('dive_delim')
+  UseMethod("dive_delim")
 }
 
 #' @inheritParams dive_delim
 #' @export
 #' @keywords internal
-dive_delim.default <- function(obj, nms = c('time', 'depth'), thres.dur = 300, 
-                               thres.depth = 15, warn = TRUE, ...) {
+dive_delim.default <- function(obj, nms = c("time", "depth"), thres.dur = 300, 
+                               thres.depth = 15, ...) {
   tm <- nms[1] ; dp <- nms[2]
   obj[ , tm] <- as.numeric(obj[ , tm])
   
@@ -55,22 +55,22 @@ dive_delim.default <- function(obj, nms = c('time', 'depth'), thres.dur = 300,
   dvs <- per(abs(obj[ , dp]) < abs(thres.depth))
   
   # Correction according to duration threshold
-  # A dive has to last more than 'thres.dur' second
+  # A dive has to last more than "thres.dur" second
   dt <- round(obj[dvs$ed_idx, tm] - obj[dvs$st_idx, tm]) + 1
   cond <- !dvs$value & dt < thres.dur
   dvs$value[cond] <- TRUE
   out <- per(rep(dvs$value, times = dvs$length))
   
   # Add a Warning column to store possible problems
-  if (warn) out$warn <- list(NA)
+  out$warn <- NA
   
   # Check for missing time stamps
   dr <- (out$length - 1) * time_reso(obj[ , tm])
   dt <- round(obj[out$ed_idx, tm] - obj[out$st_idx, tm])
   missingtime <- dt != dr
   if (any(missingtime)) {
-    warning('The datset has missing time stamps')
-    if (warn) out$warn[missingtime] <- list('missing time stamp')
+    warning("The datset has missing time stamps")
+    out$warn[missingtime] <- upd_warn(out$warn[missingtime], "missing time stamp")
   }
   
   # Add a "no_dive" column
@@ -78,34 +78,32 @@ dive_delim.default <- function(obj, nms = c('time', 'depth'), thres.dur = 300,
   out$no_dive <- ifelse(!out$value, out$no_dive, -out$no_dive)
   
   # Warning if last line is not a surface
-  if (out$value[nrow(out)] == 'dive') {
-    warning('The dataset ends with a dive. This last dive may be truncated.')
-    if (warn) out$warn[nrow(out)] <- ifelse(is.na(out$warn[nrow(out)]), list('may be truncated'), 
-                                            list(c(out$warn[nrow(out)], 'may be truncated')))
+  if (out$value[nrow(out)] == "dive") {
+    warning("The dataset ends with a dive. This last dive may be truncated.")
+    out$warn[nrow(out)] <- upd_warn(out$warn[nrow(out)], "may be truncated")
   }
   
   # Format & Set attributes with processing information
-  out <- setNames(out, c("st_idx", "ed_idx", "type", "dive_dur", 'warning', "no_dive"))
-  out_nms <- c('st_idx', 'ed_idx', 'no_dive', `if`(warn, 'warning', NULL))
+  out <- setNames(out, c("st_idx", "ed_idx", "type", "dive_dur", "warning", "no_dive"))
+  out_nms <- c("st_idx", "ed_idx", "no_dive", "warning")
   out <- out[ , out_nms]
-  attr(out, 'thres.depth') <- thres.depth
-  attr(out, 'thres.dur') <- thres.dur
-  attr(out, 'ignored_dives') <- list(st_idx = dvs$st_idx[cond], dur = dur <- dt[cond], 
-                                     hist = hist(dur, plot = FALSE))
+  attr(out, "thres.depth") <- thres.depth
+  attr(out, "thres.dur") <- thres.dur
+  attr(out, "ignored_dives") <- list(st_idx = dvs$st_idx[cond], dur = dur <- dt[cond])
   out
 }
 
 #' @inheritParams  dive_delim
 #' @export
 #' @keywords internal
-dive_delim.ses <- function(obj, nms = c('time', 'depth'), thres.dur = 300, 
+dive_delim.ses <- function(obj, nms = c("time", "depth"), thres.dur = 300, 
                            thres.depth = 15, warn = TRUE, ...) {
-  if ('delim' %in% names(obj)) {
+  if ("delim" %in% names(obj)) {
     dvs <- obj$delim
-    warnCol <- `if`('warning' %in% dvs, which(names(dvs) == 'warning'), NULL)
+    warnCol <- `if`("warning" %in% dvs, which(names(dvs) == "warning"), NULL)
     return(dvs[ , c(1:3, warnCol)])
   }
-  dive_delim.default(obj, nms = c('time', 'depth'), thres.dur = 300, 
+  dive_delim.default(obj, nms = c("time", "depth"), thres.dur = 300, 
                      thres.depth = 15, warn = TRUE, ...)
 }
 
@@ -116,94 +114,134 @@ dive_delim.ses <- function(obj, nms = c('time', 'depth'), thres.dur = 300,
 #' @param thres.spd The vertical speed threshold.
 #' @param w The window width for rolling mean applied to vertical speed.
 #' @param min.depth The minimum depth (reported to the dive maximun depth) 
-#' allowed for bottom limits.
+#' allowed for bottom limits. If \code{NULL} then this threshold is ignored and 
+#' the result is returned as is.
+#' @param method If set to \code{"poly"} (the default) then this method is used 
+#' in priority. If set to \code{"std"} all the bottoms will be delimitated using 
+#' the classic method of the first and last record above 80% of the 
+#' dive maximun depth.
 #' @param ... Other arguments to be passed to \code{\link{dive_delim}}.
 #' @export
 #' @seealso \code{\link{dive_delim}}
 #' @examples
 #' data(exses)
-#' dvs <- bottom_delim(exses$tdr)
-bottom_delim <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
+#' dvs_poly <- bottom_delim(exses$tdr)
+#' dvs_std  <- bottom_delim(exses$tdr, method = "std")
+#' 
+#' # Example using the two methods
+#' n_dv <- 300
+#' opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 1))
+#' exses$delim <- dvs_poly
+#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "poly"')
+#' tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' exses$delim <- dvs_std
+#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
+#' tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' par(opar)
+#' 
+#' # Processing info
+#' table(dvs_poly$warning)
+#' attr(dvs_poly, "thres.spd")
+#' attr(dvs_poly, "w")
+#' attr(dvs_poly, "min.depth")
+#' 
+#' dvs_poly <- bottom_delim(exses$tdr, min.depth = NULL)
+#' table(dvs_poly$warning)
+#' attr(dvs_poly, "min.depth")
+bottom_delim <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
                          min.depth = 0.4, ...) {
-  UseMethod('bottom_delim')
+  UseMethod("bottom_delim")
 }
 
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.default <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
-                                 min.depth = 0.4, ...) {
+bottom_delim.default <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
+                                 min.depth = 0.4, method = c("poly", "std"), ...) {
+  # First delimitate dives and surfaces
   dvs <- dive_delim(obj, nms, ...)
-  dv_attr_nms <- c('thres.depth', 'thres.dur', 'ignored_dives')
+  dv_attr_nms <- c("thres.depth", "thres.dur", "ignored_dives")
   dv_attr <- attributes(dvs)[dv_attr_nms]
   tm <- nms[1] ; dp <- nms[2]
   obj[ , tm] <- as.numeric(obj[ , tm])
   obj <- as.ses(tdr = obj, delim = dvs)
   
-  # Compute smoothed vertical speed
-  dd <- c(NA, diff(obj$tdr[ , dp]))
-  dt <- c(NA, diff(obj$tdr[ , tm]))
-  obj$tdr$spd <- rollapply(dd / dt, mean, w, na.rm = TRUE)
-  # Correct for "time jumps" > 10 s
-  obj$tdr$spd <- ifelse(dt > 10, NA, obj$tdr$spd)
-  
-  # Bottom delim using 4 deg. poly.
-  tm <- ifelse(is.numeric(tm), names(obj)[tm], tm) # Make sure tm is a character
-  tmp <- dvs[isdv <- (dvs$no_dive > 0), ] 
+  # Preallocate bottom limits columns
   bttNms <- c("btt_st_idx", "btt_ed_idx")
   dvs[, bttNms] <- NA
-  bttPoly <- function(x, offset) {
-    # Simplify signal using a model (4 deg poly)
-    mod <- lm(x[ , 2] ~ poly(x[ , 1], degree = 4, raw = TRUE))
-    # Use threshold on predictions
-    btt <- per(abs(predict(mod)) < abs(thres.spd))
-    if (sum(btt$value) == 0)
-      c(NA, NA)
-    else 
-      unlist(btt[btt$value, -(3:4)]) + rep(offset, 2)
-  }
-  tmp <- tdrply(bttPoly, c(tm, 'spd'), ty = tmp[ , 1:2], obj = obj, 
-                la = list(offset = tmp$st_idx - 1))
-  dvs[isdv, bttNms] <- Reduce(rbind, tmp)
+  dvs[dvs$no_dive > 0, bttNms] <- dvs[dvs$no_dive > 0, 1:2]
   
-  # Check that bottom limits are deeper than 'min.depth'*100 % of dive max depth
-  thr <- abs(tdrply(max, dp, ty = dvs[ , 1:2], obj = obj) * min.depth)
-  chkok <- abs(obj$tdr[dvs$btt_st_idx, dp]) >= thr & abs(obj$tdr[dvs$btt_ed_idx, dp]) >= thr
-  chkok <- ifelse(is.na(chkok), TRUE, chkok)
-  
-  # Old fashion delim: idx of first and last depth >= 80% of Max depth
-  tmp <- dvs[!chkok, ] ; nodv_old <- dvs$no_dive[which(!chkok)]
-  thr <- (thr[!chkok] / min.depth) * 0.8 
-  bttOld <- function(x, thr, offset) {
-    rk <- which(abs(x) >= thr)
-    if (length(rk) == 0)
-      rk <- which.max(x)
-    range(rk) + offset
+  if (match.arg(method, method) == "poly") {
+    # Compute smoothed vertical speed
+    dd <- c(NA, diff(obj$tdr[ , dp]))
+    dt <- c(NA, diff(obj$tdr[ , tm]))
+    obj$tdr$spd <- rollapply(dd / dt, mean, w, na.rm = TRUE)
+    # Correct for "time jumps" > 10 s
+    obj$tdr$spd <- ifelse(dt > 10, NA, obj$tdr$spd)
+    
+    # Bottom delim using 4 deg. poly.
+    tm <- ifelse(is.numeric(tm), names(obj)[tm], tm) # Make sure tm is a character
+    tmp <- dvs[isdv <- (dvs$no_dive > 0), ] 
+    bttPoly <- function(x, offset) {
+      # Simplify signal using a model (4 deg poly)
+      mod <- lm(x[ , 2] ~ stats::poly(x[ , 1], degree = 4, raw = TRUE))
+      # Use threshold on predictions
+      btt <- per(abs(predict(mod)) < abs(thres.spd))
+      if (sum(btt$value) == 0)
+        c(NA, NA)
+      else 
+        as.list(btt[btt$value, 1:2] + offset)
+    }
+    tmp <- tdrply(bttPoly, c(tm, "spd"), ty = tmp[ , 1:2], obj = obj, 
+                  la = list(offset = tmp$st_idx - 1))
+    dvs[isdv, bttNms] <- as.data.frame(rbindlist(tmp))
+    chkok_poly <- ifelse(dvs$no_dive > 0, !is.na(dvs$btt_st_idx), TRUE)
+    dvs$warning[!chkok_poly] <- upd_warn(dvs$warning[!chkok_poly], "Poly delim failed.")
+  } else {
+    chkok_poly <- rep(FALSE, nrow(dvs))
   }
-  tmp <- tdrply(bttOld, dp, ty = tmp[ , 1:2], obj = obj, 
-                la = list(thr = thr, offset = tmp$st_idx -1))
-  dvs[!chkok, bttNms[1:2]] <- Reduce(rbind, tmp)
+  
+  # Check that bottom limits are deeper than "min.depth"*100 % of dive max depth
+  if (!is.null(min.depth)) {
+    thr <- abs(tdrply(max, dp, ty = dvs[ , 1:2], obj = obj) * min.depth)
+    chkok_depth <- abs(obj$tdr[dvs$btt_st_idx, dp]) >= thr & abs(obj$tdr[dvs$btt_ed_idx, dp]) >= thr
+    chkok_depth <- ifelse(dvs$no_dive > 0, chkok_depth, TRUE)
+    chkok_depth <- ifelse(is.na(chkok_depth), FALSE, chkok_depth)
+    cnd <- !chkok_depth & chkok_poly
+    dvs$warning[cnd] <- upd_warn(dvs$warning[cnd], "Shallow bottom limits.")
+    
+    # Old fashion delim: idx of first and last depth >= 80% of Max depth
+    tmp <- dvs[!chkok_depth, ] ; nodv_std <- dvs$no_dive[which(!chkok_depth)]
+    thr <- (thr[!chkok_depth] / min.depth) * 0.8 
+    bttstd <- function(x, thr, offset) {
+      rk <- which(abs(x) >= thr)
+      if (length(rk) == 0)
+        rk <- which.max(x)
+      as.list(range(rk) + offset)
+    }
+    tmp <- tdrply(bttstd, dp, ty = tmp[ , 1:2], obj = obj, 
+                  la = list(thr = thr, offset = tmp$st_idx -1))
+    dvs[!chkok_depth, bttNms[1:2]] <- as.data.frame(rbindlist(tmp))
+  }
   
   # Format & Set attributes
-  out_nms <- c('st_idx', 'ed_idx', 'no_dive', 'btt_st_idx', 'btt_ed_idx', 
-               `if`('warning' %in% names(dvs), 'warning', NULL))
+  out_nms <- c("st_idx", "ed_idx", "no_dive", "btt_st_idx", "btt_ed_idx", "warning")
   out <- dvs[ , out_nms]
   for (att in dv_attr_nms) {attr(out, att) <- dv_attr[[att]]}
-  attr(out, 'old_bottom_delim') <- list(Dive.id = nodv_old)
-  attr(out, 'thres.spd') <- thres.spd
-  attr(out, 'w') <- w
-  attr(out, 'min.depth') <- min.depth
+  attr(out, "thres.spd") <- thres.spd
+  attr(out, "w") <- w
+  attr(out, "min.depth") <- min.depth
   out
 }
 
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.ses <- function(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
+bottom_delim.ses <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
                              min.depth = 0.4, ...) {
-  if ('delim' %in% names(obj))
+  if ("delim" %in% names(obj))
     return(obj$delim)
-  bottom_delim.default(obj, nms = c('time', 'depth'), thres.spd = 0.9, w = 12, 
+  bottom_delim.default(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
                        min.depth = 0.4, ...)
 }
 

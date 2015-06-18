@@ -1,3 +1,13 @@
+#' Update warning column in delim table
+#' 
+#' @param x Subset of warn column
+#' @param  msg Message to append
+#' @keywords internal
+#' @export
+upd_warn <- function(x, msg) {
+  paste0(ifelse(is.na(x), "", x), ifelse(is.na(x), "", "; "), msg)
+}
+
 #' Angle average
 #' 
 #' @param x angle in radians.

@@ -17,16 +17,44 @@ bottom_delim(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12,
 \item{w}{The window width for rolling mean applied to vertical speed.}
 
 \item{min.depth}{The minimum depth (reported to the dive maximun depth)
-allowed for bottom limits.}
+allowed for bottom limits. If \code{NULL} then this threshold is ignored and
+the result is returned as is.}
 
 \item{...}{Other arguments to be passed to \code{\link{dive_delim}}.}
+
+\item{method}{If set to \code{"poly"} (the default) then this method is used
+in priority. If set to \code{"std"} all the bottoms will be delimitated using
+the classic method of the first and last record above 80% of the
+dive maximun depth.}
 }
 \description{
 Find the dives' bottom start and end
 }
 \examples{
 data(exses)
-dvs <- bottom_delim(exses$tdr)
+dvs_poly <- bottom_delim(exses$tdr)
+dvs_std  <- bottom_delim(exses$tdr, method = "std")
+
+# Example using the two methods
+n_dv <- 300
+opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 1))
+exses$delim <- dvs_poly
+tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "poly"')
+tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+exses$delim <- dvs_std
+tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
+tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+par(opar)
+
+# Processing info
+table(dvs_poly$warning)
+attr(dvs_poly, "thres.spd")
+attr(dvs_poly, "w")
+attr(dvs_poly, "min.depth")
+
+dvs_poly <- bottom_delim(exses$tdr, min.depth = NULL)
+table(dvs_poly$warning)
+attr(dvs_poly, "min.depth")
 }
 \seealso{
 \code{\link{dive_delim}}

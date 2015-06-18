@@ -36,9 +36,9 @@ data(exses)
 dvs <- dive_delim(exses$tdr)
 
 # Processing info
-unique(dvs$warning)
-attr(dvs, 'thres.depth')
-attr(dvs, 'thres.dur')
+table(dvs$warning)
+attr(dvs, "thres.depth")
+attr(dvs, "thres.dur")
 }
 \seealso{
 \code{\link{bottom_delim}}

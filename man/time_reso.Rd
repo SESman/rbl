@@ -11,7 +11,7 @@ time_reso(x, n = 10, type = c("period", "frequence"))
 
 \item{n}{the number of replicates to do.}
 
-\item{type}{Should the result be returned in seconds ('period') or hertz ('frequence') ?}
+\item{type}{Should the result be returned in seconds ("period") or hertz ("frequence") ?}
 }
 \description{
 Sampling rate of a TDR dataset
