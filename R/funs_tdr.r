@@ -3,32 +3,25 @@
 #' @param x a numeric or logical.
 #' @param obj a "ses" object.
 #' @return vector of selected dive numbers.
-#' @details -0 syntax allowed.
 #' @export
 #' @keywords internal tdr_interpreter
 #' @examples
 #' no_interpreter(NULL)    # all dive numbers returned
 #' no_interpreter(1:10)    # returns dive numbers 1:10
 #' no_interpreter(-(1:10)) # all dive number returned but 1:10
-#' no_interpreter(-0)      # All dive number returned but 0
 no_interpreter <- function(x, obj = ind()) {
-  no <- obj$delim$no_dive[obj$delim$no_dive >= 0]
+  no <- obj$delim$no_dive[obj$delim$no_dive > 0]
   if (is.null(x)) {
     return(no)
   } else if (is.logical(x)) {
     any(x) || stop('At least one element of "no" should be TRUE.')
     return(no[x])
   } else {
-    bak <- deparse(substitute(x))
     if (is.numeric(x)) {
-      rm0 <- any(bak == "-0")
-      if (any(x > 0) && (any(x < 0) || rm0)) 
+      if (any(x > 0) && any(x < 0)) 
         stop("only 0's may be mixed with negative subscripts.")
-      if (all(x >= 0 && !rm0)) {
-        return(x)
-      } else {
-        return(no[!no %in% c("if"(rm0, 0, NULL), -x)])
-      }
+      if (all(x < 0)) return(no %w/o% -x)
+      else return(x)
     } else {
       stop('"x" must be logical or numeric')
     }
@@ -88,8 +81,8 @@ ty_interpreter <- function(x, all = TRUE) {
 #' @keywords internal tdr_extract
 #' @examples
 #' data(exses)
-#' elt_delim('-', 50:52, exses$delim)
-#' elt_delim("/", no = c(52, 52:50), delim = exses$delim)
+#' elt_delim('-', 60:62, exses$delim)
+#' elt_delim("/", no = c(62, 62:60), delim = exses$delim)
 elt_delim <- function(elt, no, delim) {
   is.character(elt) || stop('"elt" must be character')
   nchar(elt) == 1 || stop('"elt" must be ONE character')
@@ -102,8 +95,8 @@ elt_delim <- function(elt, no, delim) {
   
   # Avoid redondancy between bottom and descent/ascent
   if (elt == "_"){
-    out[ , 1] <-  out[ , 1] + 1 
-    out[ , 2] <-  out[ , 2] - 1
+    out[ , 1] <-  as.numeric(out[ , 1]) + 1
+    out[ , 2] <-  as.numeric(out[ , 2]) - 1
   }
   
   # Insert rows where there is no match for "no"
@@ -137,22 +130,26 @@ elt_delim <- function(elt, no, delim) {
 #' data(exses)
 #' ind(exses)
 #' 
-#' str(tmp <- ty_delim('_', no = 50:52))
-#' str(tmp <- ty_delim('!_/', no = 50:52))
+#' str(tmp <- ty_delim('_', no = 60))
+#' str(tmp <- ty_delim('_&!', no = 60))
 #' 
-#' str(tmp <- ty_delim('-&!&_&/&~', no = 50:52))
-#' str(tmp <- ty_delim('-!&/~', no = 50:52))
+#' str(tmp <- ty_delim('_', no = 60:62))
+#' str(tmp <- ty_delim('!_/', no = 60:62))
 #' 
-#' str(tmp <- ty_delim('-!|/~', no = 50:52))
-#' str(tmp <- ty_delim('-(!|/)~', no = 50:52))
+#' str(tmp <- ty_delim('-&!&_&/&~', no = 60:62))
+#' str(tmp <- ty_delim('-!&/~', no = 60:62))
 #' 
-#' str(tmp <- ty_delim('-(!|/)&~', no = 50:52))
+#' str(tmp <- ty_delim('-!|/~', no = 60:62))
+#' str(tmp <- ty_delim('-(!|/)~', no = 60:62))
 #' 
-#' str(tmp <- ty_delim("-&(__)|(/~)&//", no = 50:52))
+#' str(tmp <- ty_delim('-(!|/)&~', no = 60:62))
+#' 
+#' str(tmp <- ty_delim("-&(__)|(/~)&//", no = 60:62))
 ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
   all(sapply(ty, is.character)) || stop('"ty" must be a character')
   if (length(ty) > 1) return(lapply(ty, tydelim, no = no, obj = obj, no_match = no_match))
   no <- no_interpreter(no, obj)
+  ty_bak <- ty
   ty <- ty_interpreter(ty, all = TRUE)
   
   # Find command related to an id
@@ -223,6 +220,7 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
     # Concatenate inputs in a list
     x <- lapply(x, check)
     if (any(sapply(x, is.null))) return(NULL)
+    if (list_depth(x) == 2) return(x)
     unlist(x, recursive = FALSE)
   }
   
@@ -266,6 +264,10 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
     }
   }
   out <- check_nomtch(tmp[[max(ty$id)]], no_match, obj)
+  if (is.data.frame(out)) 
+      out <- setNames(list(out), paste0(ty_bak, "#", no))
+  if (is.null(names(out))) 
+      out <- setNames(out, paste0(sapply(out, function(x) paste0(x$elt)), "#", no))
   out <- out[order(sapply(strsplit(names(out), "#"), function(x) as.numeric(x[[2]])))]
   class(out) <- c(class(out), "ty")
   out

@@ -21,8 +21,8 @@ Extract indices corresponding to a symbol from a "delim" table
 }
 \examples{
 data(exses)
-elt_delim('-', 50:52, exses$delim)
-elt_delim("/", no = c(52, 52:50), delim = exses$delim)
+elt_delim('-', 60:62, exses$delim)
+elt_delim("/", no = c(62, 62:60), delim = exses$delim)
 }
 \keyword{internal}
 \keyword{tdr_extract}

@@ -22,18 +22,21 @@ Extract indices from "delim" table using a regexp-like syntax
 data(exses)
 ind(exses)
 
-str(tmp <- ty_delim('_', no = 50:52))
-str(tmp <- ty_delim('!_/', no = 50:52))
+str(tmp <- ty_delim('_', no = 60))
+str(tmp <- ty_delim('_&!', no = 60))
 
-str(tmp <- ty_delim('-&!&_&/&~', no = 50:52))
-str(tmp <- ty_delim('-!&/~', no = 50:52))
+str(tmp <- ty_delim('_', no = 60:62))
+str(tmp <- ty_delim('!_/', no = 60:62))
 
-str(tmp <- ty_delim('-!|/~', no = 50:52))
-str(tmp <- ty_delim('-(!|/)~', no = 50:52))
+str(tmp <- ty_delim('-&!&_&/&~', no = 60:62))
+str(tmp <- ty_delim('-!&/~', no = 60:62))
 
-str(tmp <- ty_delim('-(!|/)&~', no = 50:52))
+str(tmp <- ty_delim('-!|/~', no = 60:62))
+str(tmp <- ty_delim('-(!|/)~', no = 60:62))
 
-str(tmp <- ty_delim("-&(__)|(/~)&//", no = 50:52))
+str(tmp <- ty_delim('-(!|/)&~', no = 60:62))
+
+str(tmp <- ty_delim("-&(__)|(/~)&//", no = 60:62))
 }
 \keyword{internal}
 \keyword{tdr_extract}

@@ -17,14 +17,10 @@ vector of selected dive numbers.
 \description{
 Subset dive numbers with values as using indices
 }
-\details{
--0 syntax allowed.
-}
 \examples{
 no_interpreter(NULL)    # all dive numbers returned
 no_interpreter(1:10)    # returns dive numbers 1:10
 no_interpreter(-(1:10)) # all dive number returned but 1:10
-no_interpreter(-0)      # All dive number returned but 0
 }
 \keyword{internal}
 \keyword{tdr_interpreter}
