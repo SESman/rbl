@@ -66,10 +66,10 @@ prey_catch_attempts <- function(x, fs = 16, fc = 2.64) {
   # 1 s fixed window standard deviation + aggregate data to 1 Hz
   x <- x[ , lapply(.SD, sd, na.rm = TRUE), by = time]
   # In case of NAs set ACC to zero
-  nas <- x[ , 2:4 := lapply(.SD, is.na), by = time, .SDcols = 2:4]
-  nas_vector <- Reduce("|", nas[ , time := NULL])
+  nas <- lapply(x[ , 2:4, with = FALSE], is.na)
+  nas_vector <- Reduce("|", nas)
   if (any(nas_vector)) {
-    warning("NAs found and replaced by 0. Na proportion:", mean(nas_vector))
+    warning("NAs found and replaced by 0. NA proportion:", mean(nas_vector))
     x$ax[nas$ax] <- 0
     x$ay[nas$ay] <- 0
     x$az[nas$az] <- 0
