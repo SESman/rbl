@@ -99,7 +99,7 @@ correct_depth <- function (x, dur = 5000, plt = FALSE, span = 0.15, ...)
                    2, aty = "m")
   vals <- rollapply(wds, function(st, ed) min(x[st:ed], na.rm = TRUE), 
                     2, aty = "m")
-  gam <- loess(vals ~ rks, span = span, ...)
+  gam <- loess(vals ~ rks, span = span, family = "symmetric", ...)
   if (plt) {
     plot(vals ~ rks)
     lines(na.omit(rks), fitted(gam), col = "red", lwd = 2)
