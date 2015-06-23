@@ -2,30 +2,91 @@
 % Please edit documentation in R/funs_behavior.r
 \name{wiggles}
 \alias{wiggles}
-\title{Count the number of wiggle in a dive}
+\title{Count/Extract wiggles in 2D dataset.}
 \usage{
-wiggles(x, y = NULL, thres.depth = 2, thres.dur = c(5, 300),
-  plt = FALSE)
+wiggles(x, y = NULL, thres.y = 2.5, thres.x = c(10, Inf), step = NULL,
+  step.thres.y = NULL, step.thres.x = c(10, Inf), output = c("wig-count",
+  "stp-count", "table"), plt = FALSE, bsm = NULL)
 }
 \arguments{
-\item{x}{The x data. A subset of a TDR dataset time sequence. Can also
-be a list of \code{x} and \code{y} (processed by \code{\link{xy.coords}}).}
+\item{x}{The x data. A monotonous variable such as the time sequence of a TDR
+dataset. Can also be a list of \code{x} and \code{y}
+(processed by \code{\link{xy.coords}}). If x is a data frame with motre than
+two columns the fist two columns are used.}
 
-\item{y}{The y data. A subset of a TDR dataset depth sequence, processed by
-\code{\link{xy.coords}}).}
+\item{y}{The y data.}
 
-\item{thres.depth}{minimum depth difference.}
+\item{thres.y}{minimum y difference within a wiggle for it to be taken into
+account. The default values are usually appropriate if Y is a depth variable
+from a southern elephant seal dataset. If one value is provided wiggles are kept
+if the y differences are greater than this threshold. If two values are
+provided wiggles are kept when the y differences lie between these thresholds.
+This threshold is used by \code{\link{optBrokenstick}} in conjunction with
+\code{\link{max_dist_cost}} so it can not be set to \code{NULL} unless a value
+is passed to the \code{bsm} argument.}
 
-\item{thres.dur}{minimum time difference.}
+\item{thres.x}{minimum x difference within a wiggle for it to be taken into
+account. The default value is usually appropriate if X is a time variable
+from a southern elephant seal dataset. If one value is provided wiggles are
+kept when the x differences are greater than this threshold. If two values are
+provided wiggles are kept if the x differences lie between these thresholds.
+\code{NULL} is equivalent to \code{c(0, Inf)}.}
+
+\item{step}{A vertical speed threshold defining "steps" (0.35 m/s for king
+penguin). If \code{NULL} then steps are ignored.}
+
+\item{step.thres.y}{similar to \code{thres.y} but applies to steps only.}
+
+\item{step.thres.x}{similar to \code{thres.x} but applies to steps only.}
+
+\item{output}{Should the function return the number of wiggles ("wig-count"),
+the number of steps ("stp-count") or a data frame with width, height and
+ height/width ratio for each transit/step/wiggle identified ("table").}
 
 \item{plt}{Should graphics about processing be plotted ?}
+
+\item{bsm}{To speed up the process you can provide a brokenstick model to use
+directly instead of computing a new one from x and y data.}
 }
 \description{
-\code{wiggles} ...
+According to Halsey et al. 2007 (see references): Wiggles are a particular
+pattern in the dive profile over time during a dive where an increase in depth
+over time changes to a decrease in depth and then back to an increase in
+depth. This creates a short period in the dive profile that is concave in
+shape. Wiggles are defined as elements of the dive profile during which at
+three points the vertical speed passes below 0 ms–1. (NB: If useful,
+certain wiggles could be ignored, e.g. using a threshold based on their
+depth range or duration.). This function implements this definition of the
+wiggle and is primarily intended to be used on dive profile but it can be
+useful to extract the inversions in any kind of 2D data having a monotonous
+x variable.
 }
 \examples{
 data(exses)
+
+# Number of wiggles can be used as a proxy of the foraging activity
 sunflowerplot(tdrply(wiggles, ty = '_', obj = exses), exses$stat$pca)
+sunflowerplot(tdrply(wiggles, ty = '_', obj = exses, step = 0.35), exses$stat$pca)
+
+# Identifying steps as well
+tdrply(wiggles, c("time", "depth"), ty = '_', no = 265, obj = exses,
+       step = 0.35,
+       output = "table",    # decomposition of bottom into steps and wiggles
+       plt = TRUE           # plot results
+       )
+
+# Illustration of the result in a bottom of adive with pitch as Y
+exses$tdr$pitch <- pitch(exses$tdr)
+tdrply(wiggles, c("time", "pitch"), ty = '_', no = 265, obj = exses,
+       thres.y = pi / 180, # pitch is smooth so small thres.y can be used
+       output = "table",    # get stats for each identified wiggle
+       plt = TRUE           # plot results
+       )
+}
+\references{
+Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and
+quantified method for classifying seabird diving behaviour.
+Polar Biology, 30, 991–1004.
 }
 \keyword{behavior}
 

@@ -49,6 +49,38 @@ which.row <- function(x, obj = ind()) {
   out[order(order(x))]
 }
 
+#' Match values against a data.frame with start and end values 
+#' 
+#' @param x the values to be matched against \code{ref}
+#' @param ref a data.frame with start values in the first column end values in 
+#' the second column and an optional id number in the third column.
+#' @return for each \code{x} value, the row number of \code{ref} where \code{x} 
+#' lies between start and end values. If \code{ref} has a third column (an id) 
+#' its value is returned instead of the row number. When x value matches a start 
+#' and a end value the priority is given to the start.
+#' @keywords internal
+#' @export
+which.bw <- function(x, ref) {
+  first_ed_greater  <- sapply(x, function(x) {
+    tmp <- which(x < ref[ , 2])
+    vals <- ref[tmp, 2]
+    if (length(tmp) == 0) 0 else tmp[which.min(vals)]
+  })
+  last_st_less_eq <- sapply(x, function(x) {
+    tmp <- which(x >= ref[ , 1])
+    vals <- ref[tmp, 1]
+    if (length(tmp) == 0) NA else tmp[which.max(vals)]
+  })
+  first_ed_eq  <- sapply(x, function(x) {
+    tmp <- which(x == ref[ , 2])
+    vals <- ref[tmp, 2]
+    if (length(tmp) == 0) NA else tmp[which.min(vals)]
+  })
+  rks <- ifelse(first_ed_greater == last_st_less_eq, last_st_less_eq, NA)
+  rks <- ifelse(is.na(rks), first_ed_eq, rks)
+  if (ncol(ref) == 3) ref[rks, 3] else rks
+}
+
 #' Find to which specific dive/surface a instant belongs to
 #' 
 #' @param x The time (format \code{POSIXct}) or a integer giving the row number.
@@ -56,18 +88,14 @@ which.row <- function(x, obj = ind()) {
 #' @export
 which.dive <- function(x, object = ind()) {
   if (is.POSIXct(x)) {
-    st <- object$tdr[object$delim[ , 1], 1]
-    ed <- object$tdr[object$delim[ , 2], 1]
+    ref <- data.frame(
+      st = object$tdr[object$delim[ , 1], 1], 
+      ed = object$tdr[object$delim[ , 2], 1], 
+      id = object$delim[ , 3])
   } else {
-    st <- object$delim[ , 1]
-    ed <- object$delim[ , 2]
+    ref <- object$delim[ , 1:3]
   }
-  
-  rks_st <- sapply(x, function(x) (which.max(x < st) - 1) %else% 0)
-  rks_ed <- sapply(x, function(x) which.max(x <= ed) %else% -1)
-  rks <- ifelse(rks_st == rks_ed, rks_st, NA)
-  
-  object$delim$no_dive[rks]
+  which.bw(x, ref)
 }
 
 #' x with(in/out) y
@@ -104,9 +132,9 @@ which.dive <- function(x, object = ind()) {
 #' rescale(x, to = c(-1, 3))
 #' rescale(x, from = c(5, max(x)), to = c(0, 10))
 rescale <- function (x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
-	if (length(to)   > 2) to   <- range(to)
-	if (length(from) > 2) from <- range(from)
-	(x - from[1]) / diff(from) * diff(to) + to[1]
+  if (length(to)   > 2) to   <- range(to)
+  if (length(from) > 2) from <- range(from)
+  (x - from[1]) / diff(from) * diff(to) + to[1]
 }
 
 #' Extract numbers in character strings
@@ -140,18 +168,18 @@ rescale <- function (x, to = c(0, 1), from = range(x, na.rm = TRUE)) {
 #' is.null(names(x)) 		# TRUE
 #' identical(numIn(x), out) 	# TRUE
 numIn <- function(x, simplify = FALSE) {
-	if (is.recursive(x)) {
-		if (any(sapply(x, function(x) !is.character(x)))) {
-			x <- if (all(sapply(x, is.factor))) lapply(x, as.character)
-			else names(x) %else% row.names(x)
-		}
-	} else {
-		if (is.numeric(x)) x <- names(x) %else% row.names(x)
-	}
-	m <- gregexpr('-?[0-9]+\\.?([0-9]*e(\\+|-))?[0-9]*', x)
-	mtch <- if (is.list(x)) mapply(function(x, m) regmatches(x, list(m)), x, m)
-			else regmatches(x, m)
-	sapply(mtch, as.numeric, simplify = simplify)
+  if (is.recursive(x)) {
+    if (any(sapply(x, function(x) !is.character(x)))) {
+      x <- if (all(sapply(x, is.factor))) lapply(x, as.character)
+      else names(x) %else% row.names(x)
+    }
+  } else {
+    if (is.numeric(x)) x <- names(x) %else% row.names(x)
+  }
+  m <- gregexpr('-?[0-9]+\\.?([0-9]*e(\\+|-))?[0-9]*', x)
+  mtch <- if (is.list(x)) mapply(function(x, m) regmatches(x, list(m)), x, m)
+  else regmatches(x, m)
+  sapply(mtch, as.numeric, simplify = simplify)
 }
 
 #' Special operator to test if numeric values belong to a given range
@@ -245,17 +273,17 @@ nUN <- function(x) length(unique(x))
 #' @details function \code{plotrix::maxDepth}
 #' @keywords internal
 list_depth <- function (x) {
-	if (is.list(x)) {
-	  if (identical(x, list())) return(0)
-		maxdepth <- 1
-		for (lindex in 1:length(x)) {
-			newdepth <- list_depth(x[[lindex]]) + 1
-			if (newdepth > maxdepth) 
-				maxdepth <- newdepth
-		}
-	}
-	else maxdepth <- 0
-	return(maxdepth)
+  if (is.list(x)) {
+    if (identical(x, list())) return(0)
+    maxdepth <- 1
+    for (lindex in 1:length(x)) {
+      newdepth <- list_depth(x[[lindex]]) + 1
+      if (newdepth > maxdepth) 
+        maxdepth <- newdepth
+    }
+  }
+  else maxdepth <- 0
+  return(maxdepth)
 }
 
 #' nstr
@@ -272,18 +300,18 @@ list_depth <- function (x) {
 #' names(c(x, recursive=TRUE))
 #' nstr(x)
 nstr <- function(x) {
-	n <- list_depth(x)
-	name.vec <- c()
-	if (n == 1){
-		return(names(x))
-	} else if (n > 1){
-		for (i in seq_along(x)){
-			name.vec <- c(name.vec,
-						  names(x), 
-						  paste(names(x)[i], nstr(x[[i]]), sep='.'))
-		}
-	}
-	return(unique(name.vec[!grepl('\\.$', name.vec)]))
+  n <- list_depth(x)
+  name.vec <- c()
+  if (n == 1){
+    return(names(x))
+  } else if (n > 1){
+    for (i in seq_along(x)){
+      name.vec <- c(name.vec,
+                    names(x), 
+                    paste(names(x)[i], nstr(x[[i]]), sep='.'))
+    }
+  }
+  return(unique(name.vec[!grepl('\\.$', name.vec)]))
 }
 
 #' Search recurssively to a data.frame
@@ -423,7 +451,7 @@ per <- function(x, idx = TRUE) {
   x.org <- x
   if (is.logical(x) || is.factor(x)) {x <- as.numeric(x)}
   else if (is.character(x)) {x <- as.numeric(as.factor(x))}
-
+  
   chg <- diff(x)
   end <- c(which(chg != 0), length(x))
   start <- c(1, end[-length(end)] + 1)
@@ -435,7 +463,7 @@ per <- function(x, idx = TRUE) {
   else 
     data.frame(value = x.org[start], length = end - start + 1, 
                stringsAsFactors = FALSE)
-
+  
   class(out) <- c("per", "data.frame")
   out
 }
