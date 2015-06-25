@@ -58,8 +58,32 @@ axisPOSIXct <-function(x, side = 1, format = '%m/%d') {
 #' @param ... as in \code{\link{plot}}
 #' @export
 #' @keywords internal
+#' @examples 
+#' data(exses)
+#' tdrply(plot, c("time", "depth", "is_pca"), no = 65, obj = exses)
+#' 
+#' exses$tdr$no_btt <- tdrexpand(exses$stat$no_dive, ty = "_", obj = exses)
+#' exses$tdr$is_btt <- !is.na(exses$tdr$no_btt)
+#' tdrply(plot, c("time", "depth", "is_btt"), no = 65, obj = exses)
+#' tdrply(plot, c("depth", "temp", "is_btt"), no = 65, obj = exses)
 plot.tdr <- function(x, type = "l", ...) {
-  if (names(x)[1] == "depth") x <- x[ , 2:1]
-  if (names(x)[2] == "depth") yl <- rev(range(x$depth)) else range(x[ , 2])
-  plot(as.data.frame(x), type = type, ylim = list(...)[["ylim"]] %else% yl, ...)
+  # If depth is involved set it to Y and inverse axe
+  if (names(x)[1] == "depth") x <- cbind(x[ , 2:1], x[ , -(1:2)])
+  if (names(x)[2] == "depth") yl <- rev(range(x$depth))
+  dots <- list(...)
+  if (exists("yl") && !grepl("ylim", names(dots) %else% "")) dots[["ylim"]] <- yl
+  
+  # If 3 variables in input and no color specification use tird column
+  if (ncol(x) == 3 && !grepl("col", names(dots) %else% "")) {
+    f <- x[ , 3]
+    if (is.logical(f)) {col <- f + 1} 
+    else if (is.factor(f) || is.character(f)) {col <- as.interger(as.factor(f))} 
+    else if (is.numeric(f)) {col <- grey(rescale(f))}
+    dots[["type"]] <- "p"
+    dots[["col"]] <- col
+    do.call(plot, c(list(x = as.data.frame(x[ , 1:2])), dots))
+    } else {
+    do.call(plot, c(list(x = as.data.frame(x), type = type), dots))
+  }
+  invisible(NULL)
 }

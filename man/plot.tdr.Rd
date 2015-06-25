@@ -16,5 +16,14 @@
 \description{
 Reverse Y axe when depth column in inputs
 }
+\examples{
+data(exses)
+tdrply(plot, c("time", "depth", "is_pca"), no = 65, obj = exses)
+
+exses$tdr$no_btt <- tdrexpand(exses$stat$no_dive, ty = "_", obj = exses)
+exses$tdr$is_btt <- !is.na(exses$tdr$no_btt)
+tdrply(plot, c("time", "depth", "is_btt"), no = 65, obj = exses)
+tdrply(plot, c("depth", "temp", "is_btt"), no = 65, obj = exses)
+}
 \keyword{internal}
 
