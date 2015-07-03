@@ -54,25 +54,15 @@
 #' sunflowerplot(tdrply(wiggles, ty = '_', obj = exses, step = 0.35), exses$stat$pca)
 #' 
 #' # Identifying steps as well
-#' tdrply(wiggles, c("time", "depth"), ty = '_', no = 265, obj = exses, 
-#'        step = 0.35,
-#'        output = "table",    # decomposition of bottom into steps and wiggles
-#'        plt = TRUE           # plot results
-#'        )
-#'          
-#' # Illustration of the result in a bottom of adive with pitch as Y
-#' exses$tdr$pitch <- pitch(exses$tdr)
-#' tdrply(wiggles, c("time", "pitch"), ty = '_', no = 265, obj = exses, 
-#'        thres.y = pi / 180, # pitch is smooth so small thres.y can be used
-#'        output = "table",    # get stats for each identified wiggle
-#'        plt = TRUE           # plot results
-#'        )
+#' tdrply(wiggles, c("time", "depth"), ty = '_', no = 65, obj = exses, 
+#'        step = 0.35, output = "table", plt = TRUE)
 wiggles <- function(x, y = NULL, thres.y = 2.5, thres.x = c(10, Inf), 
                     step = NULL, step.thres.y = NULL, step.thres.x = c(10, Inf), 
                     output = c("wig-count", "stp-count", "table"), 
                     plt = FALSE, bsm = NULL) {
   output <- match.arg(output, output)
-  if (is.null(step) && output == "stp-count") stop('"step" canot be NULL when step count is required as output.')
+  if (is.null(step) && output == "stp-count") 
+    stop('"step" canot be NULL when step count is required as output.')
   xy <- as.data.frame(xy.coords(x, y)[1:2])
   if (is.null(bsm)) 
     bsm <- optBrokenstick(xy, threshold = thres.y, cost = max_dist_cost)
@@ -199,7 +189,7 @@ wiggles <- function(x, y = NULL, thres.y = 2.5, thres.x = c(10, Inf),
   out$type <- factor(out$type, levels = c("transit", "wiggle", "step"))
   out <- na.omit(out)
   cnd <- duplicated(out$end_x)
-  sum(cnd) <= 1 || stop("Overlapping.")
+  if (sum(cnd) > 1) browser()
   if (any(cnd)) out$end_x[which(cnd) - 1] <- out$start_x[which(cnd)]
   
   # Plot results

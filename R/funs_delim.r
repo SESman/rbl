@@ -16,10 +16,12 @@ time_reso <- function(x, n = 10, type = c("period", "frequence")) {
 
 #' Find the dives start and end
 #' 
-#' @param obj An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'}.
-#' @param nms The names of the variables to use. Depends on the method.
-#' @param thres.dur The minimum time (is seconds) a dive should last before it is 
-#' indeed considered a dive.
+#' @param obj An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'} 
+#' with time and depth variables named "time" and "depth".
+#' @param thres.dur The minimum time (seconds) a dive should last to be 
+#' considered as a dive. If \code{thres.dur} has two elements the second is the 
+#' maximum time (seconds) a dive should last to be considered as a dive. If 
+#' \code{thres.dur = NULL} then this threshod is ignored.
 #' @param thres.depth The depth threshold (in sensor units): diving 
 #' period implies greater values.
 #' @param warn Should a Warning column be added ?
@@ -38,7 +40,7 @@ time_reso <- function(x, n = 10, type = c("period", "frequence")) {
 #' table(dvs$warning)
 #' attr(dvs, "thres.depth")
 #' attr(dvs, "thres.dur")
-dive_delim <- function(obj, nms = c("time", "depth"), thres.dur = 300, thres.depth = 15, 
+dive_delim <- function(obj, thres.dur = c(300, 3000), thres.depth = 15, 
                        warn = TRUE, ...) {
   UseMethod("dive_delim")
 }
@@ -46,27 +48,38 @@ dive_delim <- function(obj, nms = c("time", "depth"), thres.dur = 300, thres.dep
 #' @inheritParams dive_delim
 #' @export
 #' @keywords internal
-dive_delim.default <- function(obj, nms = c("time", "depth"), thres.dur = 300, 
-                               thres.depth = 15, ...) {
-  tm <- nms[1] ; dp <- nms[2]
-  obj[ , tm] <- as.numeric(obj[ , tm])
+dive_delim.default <- function(obj, thres.dur = c(300, 3000), thres.depth = 15, ...) {
+  obj[ , "time"] <- as.numeric(obj[ , "time"])
   
   # ID diving/surface periods given a depth threshold
-  dvs <- per(abs(obj[ , dp]) < abs(thres.depth))
+  dvs <- per(abs(obj[ , "depth"]) < abs(thres.depth))
   
   # Correction according to duration threshold
   # A dive has to last more than "thres.dur" second
-  dt <- round(obj[dvs$ed_idx, tm] - obj[dvs$st_idx, tm]) + 1
-  cond <- !dvs$value & dt < thres.dur
-  dvs$value[cond] <- TRUE
-  out <- per(rep(dvs$value, times = dvs$length))
+  if (!is.null(thres.dur)) {
+    dt <- round(obj[dvs$ed_idx, "time"] - obj[dvs$st_idx, "time"]) + 1
+    cond_short <- !dvs$value & dt <= thres.dur[1]
+    cond_long <- if (length(thres.dur) == 2) !dvs$value & dt >= thres.dur[2]
+    else rep(FALSE, nrow(dvs))
+    cond <- cond_short | cond_long
+    dvs$value[cond] <- TRUE
+    idx_short <- pmean(dvs$st_idx[cond_short], dvs$ed_idx[cond_short])
+    idx_long <- pmean(dvs$st_idx[cond_long], dvs$ed_idx[cond_long])
+    out <- per(rep(dvs$value, times = dvs$length))
+  } else {
+    cond <- rep(FALSE, nrow(dvs))
+  }
   
   # Add a Warning column to store possible problems
   out$warn <- NA
+  if (!is.null(thres.dur)) {
+    out$warn[which.bw(idx_short, out[ , 1:2])] <- 'include a "short" dive.'
+    out$warn[which.bw(idx_long, out[ , 1:2])] <- 'include a "long" dive.'
+  }
   
   # Check for missing time stamps
-  dr <- (out$length - 1) * time_reso(obj[ , tm])
-  dt <- round(obj[out$ed_idx, tm] - obj[out$st_idx, tm])
+  dr <- (out$length - 1) * time_reso(obj[ , "time"])
+  dt <- round(obj[out$ed_idx, "time"] - obj[out$st_idx, "time"])
   missingtime <- dt != dr
   if (any(missingtime)) {
     warning("The datset has missing time stamps")
@@ -90,160 +103,252 @@ dive_delim.default <- function(obj, nms = c("time", "depth"), thres.dur = 300,
   attr(out, "thres.depth") <- thres.depth
   attr(out, "thres.dur") <- thres.dur
   attr(out, "ignored_dives") <- list(st_idx = dvs$st_idx[cond], dur = dur <- dt[cond])
+  
+  # Preallocate bottom limits columns
+  bttNms <- c("btt_st_idx", "btt_ed_idx")
+  out[, bttNms] <- NA
   out
 }
 
 #' @inheritParams  dive_delim
 #' @export
 #' @keywords internal
-dive_delim.ses <- function(obj, nms = c("time", "depth"), thres.dur = 300, 
-                           thres.depth = 15, warn = TRUE, ...) {
+dive_delim.ses <- function(obj, thres.dur = c(300, 3000), thres.depth = 15, 
+                           warn = TRUE, ...) {
   if ("delim" %in% names(obj)) {
     dvs <- obj$delim
-    warnCol <- `if`("warning" %in% dvs, which(names(dvs) == "warning"), NULL)
+    warnCol <- "if"("warning" %in% dvs, which(names(dvs) == "warning"), NULL)
     return(dvs[ , c(1:3, warnCol)])
   }
-  dive_delim.default(obj, nms = c("time", "depth"), thres.dur = 300, 
-                     thres.depth = 15, warn = TRUE, ...)
+  dive_delim.default(obj, thres.dur, thres.depth, warn, ...)
 }
 
 #' Find the dives' bottom start and end
 #' 
-#' @param obj An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'}.
-#' @param nms The names of the variables to use. Depends on the method.
-#' @param thres.spd The vertical speed threshold.
-#' @param w The window width for rolling mean applied to vertical speed.
-#' @param min.depth The minimum depth (reported to the dive maximun depth) 
-#' allowed for bottom limits. If \code{NULL} then this threshold is ignored and 
-#' the result is returned as is.
-#' @param method If set to \code{"poly"} (the default) then this method is used 
-#' in priority. If set to \code{"std"} all the bottoms will be delimitated using 
-#' the classic method of the first and last record above 80% of the 
-#' dive maximun depth.
-#' @param ... Other arguments to be passed to \code{\link{dive_delim}}.
+#' @param obj An object of class \code{'ses'} or \code{'tdr'}. In the first case 
+#' the function just returns the delim table of the object if it exists else it 
+#' computes the delim table from the TDR data.
+#' with time and depth variables named "time" and "depth".
+#' @param method the method to used. See help for functions in see also section 
+#' to get details about possible options. When \code{"vspd"} or \code{"halsey"} 
+#' methods fails \code{"std"} is used instead.
+#' @param dvs a delim table such as return by \code{\link{dive_delim}}. If NULL 
+#' \code{\link{dive_delim}} will be used with default arguments to compute one.
+#' @param ... arguments to be passed to \code{\link{bottom_delim_vspd}}, 
+#' \code{\link{bottom_delim_halsey}} or \code{\link{bottom_delim_std}} according 
+#' to the specified method.
 #' @export
-#' @seealso \code{\link{dive_delim}}
+#' @seealso \code{\link{dive_delim}}, \code{\link{bottom_delim_vspd}}, 
+#' \code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_std}}
 #' @examples
 #' data(exses)
-#' dvs_poly <- bottom_delim(exses$tdr)
-#' dvs_std  <- bottom_delim(exses$tdr, method = "std")
+#' dvs_vspd   <- bottom_delim(exses$tdr)
+#' dvs_halsey <- bottom_delim(exses$tdr, method = "halsey")
+#' dvs_std    <- bottom_delim(exses$tdr, method = "std")
 #' 
-#' # Example using the two methods
-#' n_dv <- 300
-#' opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 1))
-#' exses$delim <- dvs_poly
-#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "poly"')
-#' tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' # Example using the three methods
+#' n_dv <- 65
+#' opar <- par(no.readonly = TRUE) ; par(mfrow = c(3, 1))
+#' exses$delim <- dvs_vspd
+#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')
+#' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' exses$delim <- dvs_halsey
+#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "halsey"')
+#' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 #' exses$delim <- dvs_std
 #' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
-#' tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 #' par(opar)
-#' 
-#' # Processing info
-#' table(dvs_poly$warning)
-#' attr(dvs_poly, "thres.spd")
-#' attr(dvs_poly, "w")
-#' attr(dvs_poly, "min.depth")
-#' 
-#' dvs_poly <- bottom_delim(exses$tdr, min.depth = NULL)
-#' table(dvs_poly$warning)
-#' attr(dvs_poly, "min.depth")
-bottom_delim <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
-                         min.depth = 0.4, ...) {
+bottom_delim <- function(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...) {
   UseMethod("bottom_delim")
 }
 
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.default <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
-                                 min.depth = 0.4, method = c("poly", "std"), ...) {
+bottom_delim.default <- function(obj, method = c("vspd", "halsey", "std"), 
+                                 dvs = NULL, ...) {
+  method <- match.arg(method, method) 
+  delim_fun <- switch (method, bottom_delim_std, 
+                       "vspd" = bottom_delim_vspd, "halsey" = bottom_delim_halsey)
+  
   # First delimitate dives and surfaces
-  dvs <- dive_delim(obj, nms, ...)
+  if (is.null(dvs)) dvs <- dive_delim(obj)
   dv_attr_nms <- c("thres.depth", "thres.dur", "ignored_dives")
   dv_attr <- attributes(dvs)[dv_attr_nms]
-  tm <- nms[1] ; dp <- nms[2]
-  obj[ , tm] <- as.numeric(obj[ , tm])
+  obj[ , "time"] <- as.numeric(obj[ , "time"])
   obj <- as.ses(tdr = obj, delim = dvs)
-  
-  # Preallocate bottom limits columns
   bttNms <- c("btt_st_idx", "btt_ed_idx")
-  dvs[, bttNms] <- NA
-  dvs[dvs$no_dive > 0, bttNms] <- dvs[dvs$no_dive > 0, 1:2]
+  isdv <- (dvs$no_dive > 0)
   
-  if (match.arg(method, method) == "poly") {
-    # Compute smoothed vertical speed
-    dd <- c(NA, diff(obj$tdr[ , dp]))
-    dt <- c(NA, diff(obj$tdr[ , tm]))
-    obj$tdr$spd <- rollapply(dd / dt, mean, w, na.rm = TRUE)
-    # Correct for "time jumps" > 10 s
-    obj$tdr$spd <- ifelse(dt > 10, NA, obj$tdr$spd)
-    
-    # Bottom delim using 4 deg. poly.
-    tm <- ifelse(is.numeric(tm), names(obj)[tm], tm) # Make sure tm is a character
-    tmp <- dvs[isdv <- (dvs$no_dive > 0), ] 
-    bttPoly <- function(x, offset) {
-      # Simplify signal using a model (4 deg poly)
-      mod <- lm(x[ , 2] ~ stats::poly(x[ , 1], degree = 4, raw = TRUE))
-      # Use threshold on predictions
-      btt <- per(abs(predict(mod)) < abs(thres.spd))
-      if (sum(btt$value) == 0)
-        c(NA, NA)
-      else 
-        as.list(btt[btt$value, 1:2] + offset)
-    }
-    tmp <- tdrply(bttPoly, c(tm, "spd"), ty = tmp[ , 1:2], obj = obj, 
-                  la = list(offset = tmp$st_idx - 1))
-    dvs[isdv, bttNms] <- as.data.frame(rbindlist(tmp))
-    chkok_poly <- ifelse(dvs$no_dive > 0, !is.na(dvs$btt_st_idx), TRUE)
-    dvs$warning[!chkok_poly] <- upd_warn(dvs$warning[!chkok_poly], "Poly delim failed.")
-  } else {
-    chkok_poly <- rep(FALSE, nrow(dvs))
+  if (method == "halsey") {
+    tmp <- dvs[isdv, ] 
+    offset <- tmp$st_idx - 1
+    tmp <- tdrply(delim_fun, c("time", "depth"), ty = tmp, obj = obj, ...)
+    tmp <- as.data.frame(rbindlist(tmp))
+    dvs[isdv, bttNms] <- sweep(tmp[ , 1:2], 1, offset, "+")
+    cnd <- ifelse(isdv, !tmp$success, FALSE)
+    dvs$warning[cnd] <- upd_warn(dvs$warning[cnd], "used std method for bottom delim")
   }
   
-  # Check that bottom limits are deeper than "min.depth"*100 % of dive max depth
-  if (!is.null(min.depth)) {
-    thr <- abs(tdrply(max, dp, ty = dvs[ , 1:2], obj = obj) * min.depth)
-    chkok_depth <- abs(obj$tdr[dvs$btt_st_idx, dp]) >= thr & abs(obj$tdr[dvs$btt_ed_idx, dp]) >= thr
-    chkok_depth <- ifelse(dvs$no_dive > 0, chkok_depth, TRUE)
-    chkok_depth <- ifelse(is.na(chkok_depth), FALSE, chkok_depth)
-    cnd <- !chkok_depth & chkok_poly
-    dvs$warning[cnd] <- upd_warn(dvs$warning[cnd], "Shallow bottom limits.")
+  if (method == "vspd") {
+    # Bottom delim 
+    tmp <- dvs[isdv, ] 
+    offset <- tmp$st_idx - 1
+    tmp <- tdrply(delim_fun, c("time", "depth"), ty = tmp, obj = obj, ...)
+    dvs[isdv, bttNms] <- sweep(as.data.frame(rbindlist(tmp)), 1, offset, "+")
     
-    # Old fashion delim: idx of first and last depth >= 80% of Max depth
-    tmp <- dvs[!chkok_depth, ] ; nodv_std <- dvs$no_dive[which(!chkok_depth)]
-    thr <- (thr[!chkok_depth] / min.depth) * 0.8 
-    bttstd <- function(x, thr, offset) {
-      rk <- which(abs(x) >= thr)
-      if (length(rk) == 0)
-        rk <- which.max(x)
-      as.list(range(rk) + offset)
-    }
-    tmp <- tdrply(bttstd, dp, ty = tmp[ , 1:2], obj = obj, 
-                  la = list(thr = thr, offset = tmp$st_idx -1))
-    dvs[!chkok_depth, bttNms[1:2]] <- as.data.frame(rbindlist(tmp))
+    # Check if delim return NAs
+    chkok_vspd <- ifelse(isdv, !is.na(dvs$btt_st_idx), TRUE)
+    dvs$warning[!chkok_vspd] <- upd_warn(dvs$warning[!chkok_vspd], "vspd delim failed.")
+    # Check if bottom limits deeper than 40% of max depth
+    ledge_depth <- abs(tdrply(max, "depth", ty = dvs[ , 1:2], obj = obj) * 0.40)
+    st_depth <- abs(obj$tdr[dvs$btt_st_idx, "depth"])
+    ed_depth <- abs(obj$tdr[dvs$btt_ed_idx, "depth"])
+    chkok_depth <-  st_depth >= ledge_depth & ed_depth >= ledge_depth
+    chkok_depth <- ifelse(isdv, chkok_depth, TRUE)
+    chkok_depth <- ifelse(is.na(chkok_depth), FALSE, chkok_depth)
+    cnd <- !chkok_depth & chkok_vspd
+    dvs$warning[cnd] <- upd_warn(dvs$warning[cnd], "Shallow bottom limits.")
+  } else {
+    chkok_depth <- dvs$no_dive <= 0
+  }
+  
+  if (method %in% c("vspd", "std")) {
+    # Bottom delim
+    tmp <- dvs[!chkok_depth, ]
+    nodv_std <- dvs$no_dive[which(!chkok_depth)]
+    offset <- tmp$st_idx - 1
+    if (method == "vspd") tmp <- tdrply(bottom_delim_std, "depth", ty = tmp, obj = obj)
+    else tmp <- tdrply(delim_fun, "depth", ty = tmp, obj = obj, ...)
+    dvs[!chkok_depth, bttNms[1:2]] <- sweep(as.data.frame(rbindlist(tmp)), 1, offset, "+")
   }
   
   # Format & Set attributes
   out_nms <- c("st_idx", "ed_idx", "no_dive", "btt_st_idx", "btt_ed_idx", "warning")
   out <- dvs[ , out_nms]
   for (att in dv_attr_nms) {attr(out, att) <- dv_attr[[att]]}
-  attr(out, "thres.spd") <- thres.spd
-  attr(out, "w") <- w
-  attr(out, "min.depth") <- min.depth
+  attr(out, "method") <- method
+  attr(out, "method.args") <- list(...) %else% formals(delim_fun)
   out
 }
 
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.ses <- function(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
-                             min.depth = 0.4, ...) {
+bottom_delim.ses <- function(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...) {
   if ("delim" %in% names(obj))
     return(obj$delim)
-  bottom_delim.default(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12, 
-                       min.depth = 0.4, ...)
+  bottom_delim.default(obj, method, dvs, ...)
 }
+
+#' Delimitate bottom phase of dive using wiggles and steps
+#' 
+#' Improves \code{\link{bottom_delim_std}} by defining a lower ledge (which implies 
+#' longer bottoms) but reducing the bottom phase to a more relevant period 
+#' (where specific behavior seems to indicate intensive foraging search). This 
+#' is achieved by selecting the period between the first and last step/wiggle 
+#' (see function \code{\link{wiggles}}) deeper than the ledge.
+#' 
+#' @param time time readings, sorted in chronological order.
+#' @param depth depth readings, sorted in chronological order.
+#' @param ledge depth threshold, specified as a percentage which is compared 
+#' to the maximum depth. 0.75 has been used for king pengins. Fr the 
+#' elephant seals: about 95% of prey catch attemps occur at depth greater 
+#' than 50% of the maximum depth (default value 0.50).
+#' @param vert_vel A threshold used to define the steps. 0.35 m/s has been used for 
+#' king pengins.
+#' @references Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and 
+#' quantified method for classifying seabird diving behaviour. 
+#' Polar Biology, 30, 991–1004.
+#' @keywords internal
+#' @seealso \code{\link{wiggles}}
+#' @export
+#' @examples 
+#' data(exses)
+#' ind(exses)
+#' 
+#' n <- 65
+#' idx <- tdrply(bottom_delim_halsey, 1:2, "!_/", no = n)[[1]]
+#' tdrply(plot, 1:2, "!_/", no = n, main = n)
+#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+bottom_delim_halsey <- function(time, depth = NULL, ledge = 0.50, vert_vel = 0.35) {
+  xy <- as.data.frame(xy.coords(time, depth)[1:2])
+  rks0 <- bottom_delim_std(xy$y, ledge)
+  df  <- xy[do.call(seq, unname(rks0)), ]
+  tbl <- wiggles(df, step = vert_vel, output = "table")
+  tbl <- tbl[tbl$type %in% c("step", "wiggle"), ]
+  if (nrow(tbl) == 0) return(c(bottom_delim_std(xy$y, 0.80), list(success = FALSE)))
+  list(st = which(time == min(tbl$start_x)), ed = which(time == max(tbl$end)), 
+       success = TRUE)
+}
+
+#' Delimitate bottom phase of dive using vertical speed threshold
+#' 
+#' Delimitate bottom which is defined as the period between the first and last 
+#' moment in the dive were vertical speed (simplified signal using \code{\link{poly}}) 
+#' exceeds a threshold.
+#' 
+#' @param time time readings, sorted in chronological order.
+#' @param depth depth readings, sorted in chronological order.
+#' @param vspd smoothed verical speed, sorted in chronological order. Optional. 
+#' If provided, function is faster as it does not need to compute it from 
+#' depth and time.
+#' @param vert_vel the verical speed threshold.
+#' @param w a window width to use for vertical speed smoothing (moving average) 
+#' when \code{vspd} is not provided.
+#' @keywords internal
+#' @export
+#' @examples
+#' data(exses)
+#' ind(exses)
+#' 
+#' n <- 65
+#' idx <- tdrply(bottom_delim_vspd, 1:2, "!_/", no = n)[[1]]
+#' tdrply(plot, 1:2, "!_/", no = n, main = n)
+#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+bottom_delim_vspd <- function(time = NULL, y = NULL, y.type = c("depth", "vspd"), 
+                              vert_vel = 0.75, w = 21) {
+  y.type <- match.arg(y.type, y.type)
+  if (is.null(y) && length(time) == 1) 
+    stop("time-depth or vertical speed must be provided")
+  xy <- as.data.frame(xy.coords(time, y)[1:2])
+  if (y.type == "depth") {
+    xy$y <- rollapply(c(NA, diff(xy$y))/c(NA, diff(xy$x)), mean, w, na.rm = TRUE)
+  }
+  mod <- lm(y ~ stats::poly(x, degree = 4, raw = TRUE), xy)
+  btt <- per(abs(predict(mod)) < abs(vert_vel))
+  if (sum(btt$value) == 0) c(NA, NA)
+  else setNames(as.list(btt[btt$value, 1:2]), c("st", "ed"))
+}
+
+#' Delimitate bottom phase of dive using depth threshold
+#' 
+#' Classic bottom delimitation method that defines bottom as the period between 
+#' the first and last passage at a depth specified as a percentage of the 
+#' maximum depth in the dive.
+#' 
+#' @param depth depth readings, sorted in chronological order.
+#' @param ledge depth threshold, specified as a percentage which is compared 
+#' to the maximum depth.
+#' @keywords internal
+#' @export
+#' @examples 
+#' data(exses)
+#' ind(exses)
+#' 
+#' n <- 65
+#' idx <- tdrply(bottom_delim_std, 2, "!_/", no = n)[[1]]
+#' tdrply(plot, 1:2, "!_/", no = n, main = n)
+#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+bottom_delim_std <- function(depth, ledge = 0.80) {
+  x <- abs(depth)
+  ledge_depth <- max(x, na.rm = TRUE) * ledge
+  rk <- which(x >= ledge_depth)
+  if (length(rk) == 0) rk <- which.max(x) + c(-1, 1)
+  setNames(as.list(range(rk)), c("st", "ed"))
+}
+
 
 #' Use brokensticks to identify potential drifts
 #' 

@@ -4,59 +4,50 @@
 \alias{bottom_delim}
 \title{Find the dives' bottom start and end}
 \usage{
-bottom_delim(obj, nms = c("time", "depth"), thres.spd = 0.9, w = 12,
-  min.depth = 0.4, ...)
+bottom_delim(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...)
 }
 \arguments{
-\item{obj}{An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'}.}
+\item{obj}{An object of class \code{'ses'} or \code{'tdr'}. In the first case
+the function just returns the delim table of the object if it exists else it
+computes the delim table from the TDR data.
+with time and depth variables named "time" and "depth".}
 
-\item{nms}{The names of the variables to use. Depends on the method.}
+\item{method}{the method to used. See help for functions in see also section
+to get details about possible options. When \code{"vspd"} or \code{"halsey"}
+methods fails \code{"std"} is used instead.}
 
-\item{thres.spd}{The vertical speed threshold.}
+\item{dvs}{a delim table such as return by \code{\link{dive_delim}}. If NULL
+\code{\link{dive_delim}} will be used with default arguments to compute one.}
 
-\item{w}{The window width for rolling mean applied to vertical speed.}
-
-\item{min.depth}{The minimum depth (reported to the dive maximun depth)
-allowed for bottom limits. If \code{NULL} then this threshold is ignored and
-the result is returned as is.}
-
-\item{...}{Other arguments to be passed to \code{\link{dive_delim}}.}
-
-\item{method}{If set to \code{"poly"} (the default) then this method is used
-in priority. If set to \code{"std"} all the bottoms will be delimitated using
-the classic method of the first and last record above 80% of the
-dive maximun depth.}
+\item{...}{arguments to be passed to \code{\link{bottom_delim_vspd}},
+\code{\link{bottom_delim_halsey}} or \code{\link{bottom_delim_std}} according
+to the specified method.}
 }
 \description{
 Find the dives' bottom start and end
 }
 \examples{
 data(exses)
-dvs_poly <- bottom_delim(exses$tdr)
-dvs_std  <- bottom_delim(exses$tdr, method = "std")
+dvs_vspd   <- bottom_delim(exses$tdr)
+dvs_halsey <- bottom_delim(exses$tdr, method = "halsey")
+dvs_std    <- bottom_delim(exses$tdr, method = "std")
 
-# Example using the two methods
-n_dv <- 300
-opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 1))
-exses$delim <- dvs_poly
-tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "poly"')
-tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+# Example using the three methods
+n_dv <- 65
+opar <- par(no.readonly = TRUE) ; par(mfrow = c(3, 1))
+exses$delim <- dvs_vspd
+tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')
+tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+exses$delim <- dvs_halsey
+tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "halsey"')
+tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 exses$delim <- dvs_std
 tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
-tdrply(lines, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 par(opar)
-
-# Processing info
-table(dvs_poly$warning)
-attr(dvs_poly, "thres.spd")
-attr(dvs_poly, "w")
-attr(dvs_poly, "min.depth")
-
-dvs_poly <- bottom_delim(exses$tdr, min.depth = NULL)
-table(dvs_poly$warning)
-attr(dvs_poly, "min.depth")
 }
 \seealso{
-\code{\link{dive_delim}}
+\code{\link{dive_delim}}, \code{\link{bottom_delim_vspd}},
+\code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_std}}
 }
 

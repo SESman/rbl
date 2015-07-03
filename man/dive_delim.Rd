@@ -4,16 +4,17 @@
 \alias{dive_delim}
 \title{Find the dives start and end}
 \usage{
-dive_delim(obj, nms = c("time", "depth"), thres.dur = 300,
-  thres.depth = 15, warn = TRUE, ...)
+dive_delim(obj, thres.dur = c(300, 3000), thres.depth = 15, warn = TRUE,
+  ...)
 }
 \arguments{
-\item{obj}{An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'}.}
+\item{obj}{An object of class \code{'ses'}, \code{'statdives'} or \code{'tdr'}
+with time and depth variables named "time" and "depth".}
 
-\item{nms}{The names of the variables to use. Depends on the method.}
-
-\item{thres.dur}{The minimum time (is seconds) a dive should last before it is
-indeed considered a dive.}
+\item{thres.dur}{The minimum time (seconds) a dive should last to be
+considered as a dive. If \code{thres.dur} has two elements the second is the
+maximum time (seconds) a dive should last to be considered as a dive. If
+\code{thres.dur = NULL} then this threshod is ignored.}
 
 \item{thres.depth}{The depth threshold (in sensor units): diving
 period implies greater values.}

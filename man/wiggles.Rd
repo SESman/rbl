@@ -69,19 +69,8 @@ sunflowerplot(tdrply(wiggles, ty = '_', obj = exses), exses$stat$pca)
 sunflowerplot(tdrply(wiggles, ty = '_', obj = exses, step = 0.35), exses$stat$pca)
 
 # Identifying steps as well
-tdrply(wiggles, c("time", "depth"), ty = '_', no = 265, obj = exses,
-       step = 0.35,
-       output = "table",    # decomposition of bottom into steps and wiggles
-       plt = TRUE           # plot results
-       )
-
-# Illustration of the result in a bottom of adive with pitch as Y
-exses$tdr$pitch <- pitch(exses$tdr)
-tdrply(wiggles, c("time", "pitch"), ty = '_', no = 265, obj = exses,
-       thres.y = pi / 180, # pitch is smooth so small thres.y can be used
-       output = "table",    # get stats for each identified wiggle
-       plt = TRUE           # plot results
-       )
+tdrply(wiggles, c("time", "depth"), ty = '_', no = 65, obj = exses,
+       step = 0.35, output = "table", plt = TRUE)
 }
 \references{
 Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and
