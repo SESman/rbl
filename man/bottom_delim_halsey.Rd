@@ -12,9 +12,9 @@ bottom_delim_halsey(time, depth = NULL, ledge = 0.5, vert_vel = 0.35)
 \item{depth}{depth readings, sorted in chronological order.}
 
 \item{ledge}{depth threshold, specified as a percentage which is compared
-to the maximum depth. 0.75 has been used for king pengins. Fr the
-elephant seals: about 95% of prey catch attemps occur at depth greater
-than 50% of the maximum depth (default value 0.50).}
+to the maximum depth. 0.75 has been used for king pengins. For
+elephant seals: about 95\% of prey catch attemps occur at depth greater
+than 50\% of the maximum depth (default value 0.50).}
 
 \item{vert_vel}{A threshold used to define the steps. 0.35 m/s has been used for
 king pengins.}

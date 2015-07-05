@@ -9,8 +9,6 @@ time_reso <- function(x, n = 10, type = c("period", "frequence")) {
   iis <- sample(1:length(x), n, replace = FALSE)
   dT <- round(unlist(lapply(Map(seq, iis, iis + 3), function(I) diff(x[I]))))
   reso  <- median(dT)
-  if (is.na(reso) | !all(dT == reso))
-    warning("Some missing time stamps were found. Check the dataset !")
   switch(match.arg(type), period = reso, frequence = 1 / reso)
 }
 
@@ -253,9 +251,9 @@ bottom_delim.ses <- function(obj, method = c("vspd", "haslsey", "std"), dvs = NU
 #' @param time time readings, sorted in chronological order.
 #' @param depth depth readings, sorted in chronological order.
 #' @param ledge depth threshold, specified as a percentage which is compared 
-#' to the maximum depth. 0.75 has been used for king pengins. Fr the 
-#' elephant seals: about 95% of prey catch attemps occur at depth greater 
-#' than 50% of the maximum depth (default value 0.50).
+#' to the maximum depth. 0.75 has been used for king pengins. For 
+#' elephant seals: about 95\% of prey catch attemps occur at depth greater 
+#' than 50\% of the maximum depth (default value 0.50).
 #' @param vert_vel A threshold used to define the steps. 0.35 m/s has been used for 
 #' king pengins.
 #' @references Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and 

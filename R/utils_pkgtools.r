@@ -52,16 +52,17 @@ agl_rescale <- function(x) {
 #' @param x a POSIXct vector
 #' @export
 #' @keywords internal
-#' @details assumes that TDR data is sorted by time.
+#' @details assumes that both times are expressed according to the same time zone.
+#' @seealso \code{\link{as.POSIXct}}
 #' @examples 
 #' data(exses)
 #' ind(exses)
 #' x <- sample(1:nrow(exses$tdr), 100)
-#' identical(which.row(exses$tdr$time[x]), x)
+#' all(which.row(exses$tdr$time[x]) == x)
 which.row <- function(x, obj = ind()) {
-  obj$tdr <- data.table(obj$tdr, key = "time")
-  out <- obj$tdr[ , .I[time %in% x]]
-  out[order(order(x))]
+  mtch <- as.character(as.integer(x))
+  tmp <- structure(seq_along(obj$tdr$time), names = as.integer(obj$tdr$time), class = "integer")
+  setNames(tmp[mtch], mtch)
 }
 
 #' Match values against a data.frame with start and end values 

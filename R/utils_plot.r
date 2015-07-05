@@ -51,7 +51,8 @@ axisPOSIXct <-function(x, side = 1, format = '%m/%d') {
 
 #' plot for TDR data
 #' 
-#' Reverse Y axe when depth column in inputs
+#' When depth in input set in as Y and reverse axe. Use third column as a color 
+#' variable.
 #' 
 #' @param x TDR data
 #' @param type as in \code{\link{plot}}
@@ -69,7 +70,8 @@ axisPOSIXct <-function(x, side = 1, format = '%m/%d') {
 plot.tdr <- function(x, type = "l", ...) {
   # If depth is involved set it to Y and inverse axe
   if (names(x)[1] == "depth") x <- cbind(x[ , 2:1], x[ , -(1:2)])
-  if (names(x)[2] == "depth") yl <- rev(range(x$depth))
+  if (names(x)[2] == "depth") yl <- rev(range(x$depth, na.rm = TRUE))
+  if (exists("yl") && all(is.na(yl))) stop("depth variable contains only NA.")
   dots <- list(...)
   if (exists("yl") && !grepl("ylim", names(dots) %else% "")) dots[["ylim"]] <- yl
   
@@ -77,7 +79,7 @@ plot.tdr <- function(x, type = "l", ...) {
   if (ncol(x) == 3 && !grepl("col", names(dots) %else% "")) {
     f <- x[ , 3]
     if (is.logical(f)) {col <- f + 1} 
-    else if (is.factor(f) || is.character(f)) {col <- as.interger(as.factor(f))} 
+    else if (is.factor(f) || is.character(f)) {col <- as.integer(as.factor(f))} 
     else if (is.numeric(f)) {col <- grey(rescale(f))}
     dots[["type"]] <- "p"
     dots[["col"]] <- col

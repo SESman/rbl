@@ -133,7 +133,7 @@ swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176)) {
 #' @import data.table signal
 #' @keywords raw_processing
 #' @export
-static_acc <- function(x, fs = 16, fc = 0.01) {
+static_acc <- function(x, fs = 16, fc = 0.20) {
   stopifnot(require("data.table"))
   stopifnot(require("signal"))
   # Generate a Butterworth filter 

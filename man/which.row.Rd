@@ -13,13 +13,16 @@ which.row(x, obj = ind())
 from time stamp to row number
 }
 \details{
-assumes that TDR data is sorted by time.
+assumes that both times are expressed according to the same time zone.
 }
 \examples{
 data(exses)
 ind(exses)
 x <- sample(1:nrow(exses$tdr), 100)
-identical(which.row(exses$tdr$time[x]), x)
+all(which.row(exses$tdr$time[x]) == x)
+}
+\seealso{
+\code{\link{as.POSIXct}}
 }
 \keyword{internal}
 

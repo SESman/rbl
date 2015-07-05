@@ -4,7 +4,7 @@
 \alias{static_acc}
 \title{Static acceleration}
 \usage{
-static_acc(x, fs = 16, fc = 0.01)
+static_acc(x, fs = 16, fc = 0.2)
 }
 \arguments{
 \item{x}{3 axes acceleration table with time in the first column and acceleration

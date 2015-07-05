@@ -14,7 +14,8 @@
 \item{...}{as in \code{\link{plot}}}
 }
 \description{
-Reverse Y axe when depth column in inputs
+When depth in input set in as Y and reverse axe. Use third column as a color
+variable.
 }
 \examples{
 data(exses)
