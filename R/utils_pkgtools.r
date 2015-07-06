@@ -1,3 +1,18 @@
+#' pmean
+#' 
+#' Returns the (parallel) average of the input values.
+#' @param ... numeric or logical arguments
+#' @param na.rm	a logical indicating whether missing values should be removed.
+#' @keywords internal
+#' @export
+#' @examples
+#' pmean(1:3, 3:1)
+#' pmean(1:3, 0)
+pmean <- function (..., na.rm = FALSE) {
+  tmp <- Map(c, ...)
+  sapply(tmp, mean, na.rm = na.rm)
+}
+
 #' Update warning column in delim table
 #' 
 #' @param x Subset of warn column
