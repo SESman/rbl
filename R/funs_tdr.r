@@ -6,11 +6,19 @@
 #' @export
 #' @keywords internal tdr_interpreter
 #' @examples
+#' data(exses)
+#' ind(exses)
 #' no_interpreter(NULL)    # all dive numbers returned
+#' 
+#' # Define default values using "no_dive" slot of the ses object
+#' exses$no_dive <- 1:15
+#' no_interpreter(NULL)
+#' 
 #' no_interpreter(1:10)    # returns dive numbers 1:10
 #' no_interpreter(-(1:10)) # all dive number returned but 1:10
 no_interpreter <- function(x, obj = ind()) {
-  no <- obj$delim$no_dive[obj$delim$no_dive > 0]
+  no <- obj$no_dive
+  if (is.null(no)) no <- obj$delim$no_dive[obj$delim$no_dive > 0]
   if (is.null(x)) {
     return(no)
   } else if (is.logical(x)) {
