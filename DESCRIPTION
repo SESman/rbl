@@ -13,7 +13,8 @@ Suggests:
     knitr,
     sp,
     testthat,
-    manipulate
+    manipulate, 
+    fields
 Imports:
     utils,
     data.table, 

@@ -1,3 +1,19 @@
+#' Test if animal is located around Kerguelen
+#' 
+#' @param lon longitude
+#' @param lat latitude
+#' @param r radius
+#' @details Kerguelen location taken at (49.353282°S,69.354630°E)
+#' @import fields
+#' @export
+#' @examples 
+#' data(exses)
+#' is_at_kerguelen <- at_ker(exses$stat$lon, exses$stat$lat)
+at_ker <- function(lon, lat, r = 130) {
+  stopifnot(require("fields"))
+  as.vector(rdist.earth(data.frame(lon, lat), data.frame(69.354630, -49.353282), miles = FALSE)) < r
+}
+
 #' pmean
 #' 
 #' Returns the (parallel) average of the input values.
