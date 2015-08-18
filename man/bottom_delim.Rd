@@ -4,7 +4,8 @@
 \alias{bottom_delim}
 \title{Find the dives' bottom start and end}
 \usage{
-bottom_delim(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...)
+bottom_delim(obj, method = c("vspd", "haslsey", "bsm", "std"), dvs = NULL,
+  ...)
 }
 \arguments{
 \item{obj}{An object of class \code{'ses'} or \code{'tdr'}. In the first case
@@ -20,8 +21,8 @@ methods fails \code{"std"} is used instead.}
 \code{\link{dive_delim}} will be used with default arguments to compute one.}
 
 \item{...}{arguments to be passed to \code{\link{bottom_delim_vspd}},
-\code{\link{bottom_delim_halsey}} or \code{\link{bottom_delim_std}} according
-to the specified method.}
+\code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_bsm}} or
+\code{\link{bottom_delim_std}} according to the specified method.}
 }
 \description{
 Find the dives' bottom start and end
@@ -30,24 +31,24 @@ Find the dives' bottom start and end
 data(exses)
 dvs_vspd   <- bottom_delim(exses$tdr)
 dvs_halsey <- bottom_delim(exses$tdr, method = "halsey")
+dvs_bsm    <- bottom_delim(exses$tdr, method = "bsm")
 dvs_std    <- bottom_delim(exses$tdr, method = "std")
 
-# Example using the three methods
-n_dv <- 65
-opar <- par(no.readonly = TRUE) ; par(mfrow = c(3, 1))
+# Example using the four methods
+n_dv <- 100
+opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 2))
 exses$delim <- dvs_vspd
 tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')
 tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 exses$delim <- dvs_halsey
 tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "halsey"')
 tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+exses$delim <- dvs_bsm
+tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "bsm"')
+tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 exses$delim <- dvs_std
 tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
 tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 par(opar)
-}
-\seealso{
-\code{\link{dive_delim}}, \code{\link{bottom_delim_vspd}},
-\code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_std}}
 }
 

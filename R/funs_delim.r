@@ -133,41 +133,43 @@ dive_delim.ses <- function(obj, thres.dur = c(300, 3000), thres.depth = 15,
 #' @param dvs a delim table such as return by \code{\link{dive_delim}}. If NULL 
 #' \code{\link{dive_delim}} will be used with default arguments to compute one.
 #' @param ... arguments to be passed to \code{\link{bottom_delim_vspd}}, 
-#' \code{\link{bottom_delim_halsey}} or \code{\link{bottom_delim_std}} according 
-#' to the specified method.
+#' \code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_bsm}} or 
+#' \code{\link{bottom_delim_std}} according to the specified method.
 #' @export
-#' @seealso \code{\link{dive_delim}}, \code{\link{bottom_delim_vspd}}, 
-#' \code{\link{bottom_delim_halsey}}, \code{\link{bottom_delim_std}}
 #' @examples
 #' data(exses)
 #' dvs_vspd   <- bottom_delim(exses$tdr)
 #' dvs_halsey <- bottom_delim(exses$tdr, method = "halsey")
+#' dvs_bsm    <- bottom_delim(exses$tdr, method = "bsm")
 #' dvs_std    <- bottom_delim(exses$tdr, method = "std")
 #' 
-#' # Example using the three methods
-#' n_dv <- 65
-#' opar <- par(no.readonly = TRUE) ; par(mfrow = c(3, 1))
+#' # Example using the four methods
+#' n_dv <- 100
+#' opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 2))
 #' exses$delim <- dvs_vspd
 #' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')
 #' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 #' exses$delim <- dvs_halsey
 #' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "halsey"')
 #' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
+#' exses$delim <- dvs_bsm
+#' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "bsm"')
+#' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 #' exses$delim <- dvs_std
 #' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "std"')
 #' tdrply(points, 1:2, ty = "_", no = n_dv, obj = exses, col = "red")
 #' par(opar)
-bottom_delim <- function(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...) {
+bottom_delim <- function(obj, method = c("vspd", "haslsey", "bsm", "std"), dvs = NULL, ...) {
   UseMethod("bottom_delim")
 }
 
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.default <- function(obj, method = c("vspd", "halsey", "std"), 
+bottom_delim.default <- function(obj, method = c("vspd", "halsey", "bsm", "std"), 
                                  dvs = NULL, ...) {
   method <- match.arg(method, method) 
-  delim_fun <- switch (method, bottom_delim_std, 
+  delim_fun <- switch(method, bottom_delim_std, "bsm" = bottom_delim_bsm, 
                        "vspd" = bottom_delim_vspd, "halsey" = bottom_delim_halsey)
   
   # First delimitate dives and surfaces
@@ -187,6 +189,15 @@ bottom_delim.default <- function(obj, method = c("vspd", "halsey", "std"),
     dvs[isdv, bttNms] <- sweep(tmp[ , 1:2], 1, offset, "+")
     cnd <- ifelse(isdv, !tmp$success, FALSE)
     dvs$warning[cnd] <- upd_warn(dvs$warning[cnd], "used std method for bottom delim")
+  }
+  
+  if (method == "bsm") {
+    tmp <- dvs[isdv, ] 
+    offset <- tmp$st_idx - 1
+    tmp <- tdrply(delim_fun, c("time", "depth"), ty = tmp, obj = obj, ...)
+    tmp <- as.data.frame(rbindlist(tmp))
+    dvs[isdv, bttNms] <- sweep(tmp[ , 1:2], 1, offset, "+")
+    cnd <- ifelse(isdv, !tmp$success, FALSE)
   }
   
   if (method == "vspd") {
@@ -234,10 +245,36 @@ bottom_delim.default <- function(obj, method = c("vspd", "halsey", "std"),
 #' @inheritParams bottom_delim
 #' @export
 #' @keywords internal
-bottom_delim.ses <- function(obj, method = c("vspd", "haslsey", "std"), dvs = NULL, ...) {
+bottom_delim.ses <- function(obj, method = c("vspd", "haslsey", "bsm", "std"), dvs = NULL, ...) {
   if ("delim" %in% names(obj))
     return(obj$delim)
   bottom_delim.default(obj, method, dvs, ...)
+}
+
+#' Delimitate bottom phase of dive using brokenstick models
+#' 
+#' The bottom is defined as the dive period between the first brokenstick 
+#' segment (descent) and the last brokenstick segment (ascent).
+#' 
+#' @param time time readings, sorted in chronological order.
+#' @param depth depth readings, sorted in chronological order.
+#' @param pts The number of points to use in the brokenstick model. The default 
+#' (\code{npts = 6}) is used by CTD-SRDL tags (Sea Mammal Research unit, St Andrews 
+#' University) to summarize dive profiles.
+#' @keywords internal
+#' @export
+#' @examples 
+#' data(exses)
+#' ind(exses)
+#' 
+#' n <- 65
+#' idx <- tdrply(bottom_delim_bsm, 1:2, "!_/", no = n)[[1]]
+#' tdrply(plot, 1:2, "!_/", no = n, main = n)
+#' tdrply(function(x, st, ed, ...) points(x[st:ed, ]), 1:2, no = n, la = idx)
+bottom_delim_bsm <- function(time, depth = NULL, npts = 6) {
+  bsm <- try(brokenstick(time, depth, npts), TRUE)
+  if (is.error(bsm)) list(st = NA, ed = NA, success = FALSE)
+  else list(st = bsm$pts[2], ed = bsm$pts[npts - 1], success = TRUE)
 }
 
 #' Delimitate bottom phase of dive using wiggles and steps
