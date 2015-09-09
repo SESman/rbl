@@ -426,7 +426,7 @@ bottom_delim_std <- function(depth, ledge = 0.80) {
 #'  cnd <- tab$dur >= dur * 60 & 
 #'         abs(tab$drift_rate) <= rate & 
 #'         tab$swm_eff <= swm_eff &
-#'         abs(tab$pitch) <= pitch
+#'         tab$sd_res <= sd_resid
 #'  cnd <- "if"(no_pca, cnd & tab$pca_rate == 0, cnd)
 #'  belly_up <- abs(tab$roll) >= 90
 #'  if (up_only) cnd <- cnd & belly_up
@@ -439,10 +439,10 @@ bottom_delim_std <- function(depth, ledge = 0.80) {
 #'       xlim = range(tab$time), ylim = c(-3, 3))
 #'  abline(h = 0, col = 'gray')
 #' },
-#'  dur = slider(0, 30, initial = 2, step = 0.25, label = "Duration (minutes)"), 
+#'  dur = slider(0, 30, initial = 1.5, step = 0.25, label = "Duration (minutes)"), 
 #'  rate = slider(0, 3, initial = 3, step = 0.05, label = "Max. vertical speed (m/s)"),
-#'  swm_eff = slider(0, 2.5, initial = 2.5, step = .01, label = "Max. swimming effort (m/s³)"),
-#'  pitch = slider(0, 90, initial = 90 , step = 5, label = "Max pitch angle (deg)"), 
+#'  swm_eff = slider(0, 0.5, initial = 0.1, step = .01, label = "Max. swimming effort (m/s³)"),
+#'  sd_resid = slider(0, 10, initial = 3, step = 0.1, label = "Max residual sd (m/s)"), 
 #'  up_only = checkbox(FALSE, label = "Show belly up only"), 
 #'  no_pca = checkbox(FALSE, label = "Show no PCA only")
 #' )
@@ -469,9 +469,14 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   bsm_res <- lapply(bsm, residuals)
   bsm_pts <- df_search(lapply(bsm, function(x) x$pts))
   mean_squared_residuals <- function(res, pts) {
-    mapply(function(st, ed) mean(res[st:ed]^2), st = pts[ , 1], ed = pts[ ,2])
+    mapply(function(st, ed) mean(res[st:ed]^2, na.rm = TRUE), 
+           st = pts[ , 1], ed = pts[ ,2])
   }
   bsm_df$msr <- unlist(Map(mean_squared_residuals, bsm_res, bsm_pts))
+  sd_residuals <- function(res, pts) {
+    mapply(function(st, ed) sd(res[st:ed], na.rm = TRUE), st = pts[ , 1], ed = pts[ ,2])
+  }
+  bsm_df$sd_res <- unlist(Map(sd_residuals, bsm_res, bsm_pts))
   
   # If static acceleration available: add pitch and roll info
   nms_acc <- c()
@@ -505,10 +510,10 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   # Set names
   names(bsm_df) <- c("st_idx", "ed_idx", "no_seg_dive", "drift_rate", 
                      "intercept", "time", "dur", "no_seg_tot", "no_dive", 
-                     "min_depth", "max_depth", "msr", nms_acc)
+                     "min_depth", "max_depth", "msr", "sd_res", nms_acc)
   # Reorder columns
   bsm_df[ , c("st_idx", "ed_idx", "no_seg_tot", "no_seg_dive", "no_dive", 
               "time", "drift_rate", "dur", "min_depth", "max_depth", 
-              nms_acc, "msr")]
+              nms_acc, "msr", "sd_res")]
 }
 

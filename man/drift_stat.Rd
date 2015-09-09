@@ -52,7 +52,7 @@ tab$day <- floorPOSIXct(tab$time)
  cnd <- tab$dur >= dur * 60 &
         abs(tab$drift_rate) <= rate &
         tab$swm_eff <= swm_eff &
-        abs(tab$pitch) <= pitch
+        tab$sd_res <= sd_resid
  cnd <- "if"(no_pca, cnd & tab$pca_rate == 0, cnd)
  belly_up <- abs(tab$roll) >= 90
  if (up_only) cnd <- cnd & belly_up
@@ -65,10 +65,10 @@ tab$day <- floorPOSIXct(tab$time)
       xlim = range(tab$time), ylim = c(-3, 3))
  abline(h = 0, col = 'gray')
 },
- dur = slider(0, 30, initial = 2, step = 0.25, label = "Duration (minutes)"),
+ dur = slider(0, 30, initial = 1.5, step = 0.25, label = "Duration (minutes)"),
  rate = slider(0, 3, initial = 3, step = 0.05, label = "Max. vertical speed (m/s)"),
- swm_eff = slider(0, 2.5, initial = 2.5, step = .01, label = "Max. swimming effort (m/s³)"),
- pitch = slider(0, 90, initial = 90 , step = 5, label = "Max pitch angle (deg)"),
+ swm_eff = slider(0, 0.5, initial = 0.1, step = .01, label = "Max. swimming effort (m/s³)"),
+ sd_resid = slider(0, 10, initial = 3, step = 0.1, label = "Max residual sd (m/s)"),
  up_only = checkbox(FALSE, label = "Show belly up only"),
  no_pca = checkbox(FALSE, label = "Show no PCA only")
 )
