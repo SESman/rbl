@@ -92,3 +92,24 @@ compose <- function(...) {
 #' f <- sum %c% is.na
 #' f(c(1, NA, NA))
 "%c%" <- function(g, f) compose(f, g)
+
+#' Create a function that return a result if number of valid obs >= n
+#' @param f a function having a vector of data as first argument
+#' @param n the minimum number of observation required to return a non-NA 
+#' result. A number in \code{(0;1[} will be interpreted as a proportion.
+#' @export
+#' @keywords internal
+#' @examples 
+#' mean5 <- min_n(mean, 5)
+#' mean5(c(1:4, NA))
+#' mean5(c(1:5, NA))
+#' 
+#' mean90percent <- min_n(mean, 0.90)
+#' mean90percent(c(1:8, NA, NA))
+#' mean90percent(c(1:9, NA))
+min_n <- function(f, n) {
+  if (n >= 0 & n < 1)
+    function(x, ...) "if"(mean(cnd <- is.finite(x)) < n, NA, f(x[cnd], ...))
+  else
+    function(x, ...) "if"(sum(cnd <- is.finite(x)) < n, NA, f(x[cnd], ...))
+}

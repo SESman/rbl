@@ -1,3 +1,36 @@
+#' Compute difference between extremes in a set of observations
+#' 
+#' @param x observations
+#' @param ord If \code{TRUE}, the output depends on the ranks of observations: 
+#' \code{delta = Last_Extreme - First_Extreme} and therefore returns a negative 
+#' value if \code{max(x)} is enccountered before \code{min(x)} in \code{x} values.
+#' @param na.rm a logical value indicating whether \code{NA} values should be 
+#' stripped before the computation proceeds.
+#' @export
+#' @examples
+#' data(exses)
+#' dives_phases_durations <- tdrply(delta, "time", c("!", "_", "/", "!_/"), obj = exses)
+delta <- function(x, ord = TRUE, na.rm = TRUE) {
+  x <- as.numeric(x)
+  rng <- range(x, na.rm = na.rm)
+  if (ord && which.max(x == rng[1]) > which.max(x == rng[2])) rng <- rev(rng)
+  diff(rng)
+}
+
+#' @rdname first
+#' @title Return first or last element of a list of vector
+#' @param x a list of vector
+#' @export
+#' @examples 
+#' first(1:10)
+first <- function(x) x[1]
+
+#' @rdname first
+#' @export
+#' @examples 
+#' last(1:10)
+last <- function(x) x[length(x)]
+
 #' Test if animal is located around Kerguelen
 #' 
 #' @param lon longitude

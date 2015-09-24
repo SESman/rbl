@@ -278,3 +278,14 @@ entropy <- function(x, base = 2, scale = FALSE) {
   H <- -sum(pi * log(pi, base))
   "if"(scale, H / log(nUN(x), base), H)
 }
+
+#' Count the number of Prey Catch Attemps (PCA)
+#' 
+#' @param x a logical vector indicating at each timestamp if it was associated 
+#' to a PCA event.
+#' @details A continuous succession of \code{TRUE} is considered as a single PCA.
+#' @export
+#' @examples 
+#' data(exses)
+#' btt_pca <- tdrply(pca_count, "is_pca", ty = "_", obj = exses)
+pca_count <- function(x) try(sum(per(x)$value)) %else% NA
