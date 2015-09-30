@@ -5,7 +5,8 @@
 \title{Plot brokenstick models}
 \usage{
 \method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(y)),
-  add = FALSE, col = add + 1, enumerate = FALSE, ...)
+  add = FALSE, col = (add || data) + 1, enumerate = FALSE, data = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{\code{bsm} object to plot, typically result from \code{\link{brokenstick}}
@@ -25,6 +26,8 @@ Here y1 > y2 and leads to a "reversed axis".}
 
 \item{enumerate}{A switch to indicate if the iteration number of points should
 be added to the plot.}
+
+\item{data}{Should the data used to fit the BSM be plotted as well ?}
 
 \item{...}{Further graphical parameters (see \code{\link{par}}) may also be
 supplied as arguments.}

@@ -34,11 +34,12 @@ is \code{NULL}, no action. Value \code{\link{na.exclude}} can be useful.}
 such as \code{eco.mem}.}
 }
 \value{
-A \code{bsm} object with (depending on \code{eco.mem}) contains:
+A \code{bsm} object with (depending on \code{eco.mem}):
 \itemize{
-  \item pts.x (\code{eco.mem < 7}) The x values of the brokenstick points.
-  \item slope (\code{eco.mem < 6}) The slopes of each "stick" of the model.
-  \item intercept (\code{eco.mem < 5}) The intercept of each "stick" of the model.
+  \item pts.x The x values of the brokenstick points (\code{eco.mem} inefficient).
+  \item pts.y The y values of the brokenstick points (\code{eco.mem} inefficient).
+  \item slope The slopes of each "stick" of the model (\code{eco.mem} inefficient).
+  \item intercept The intercept of each "stick" of the model (\code{eco.mem} inefficient).
   \item pts (\code{eco.mem < 4}) The index of the brokenstick points.
   \item na.action Information from the action which was applied to object if \code{NAs}
   were handled specially. (\code{eco.mem} inefficient)

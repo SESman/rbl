@@ -11,7 +11,7 @@
 or \code{\link{optBrokenstick}}.}
 
 \item{type}{To choose in \code{c('normal', 'absolute')}. The second choice
-returning the absolute value of the first choice output.}
+returning the absolute value of the first.}
 
 \item{newdata}{\code{x} and \code{y} data to used when interested in specific
 residual values (\code{x} in first column, \code{y} in second column).}

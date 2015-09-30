@@ -12,7 +12,7 @@ have to be sorted.}
 
 \item{pts}{The points to use.}
 
-\item{eco.mem}{A value between 0 and 6 to control the memory size of the
+\item{eco.mem}{An integer value between 0 and 7 to control the memory size of the
 output. \code{0} = no memory savings.}
 }
 \description{

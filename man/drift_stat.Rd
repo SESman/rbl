@@ -20,7 +20,7 @@ new one with \code{thres.bsm} as parameter.}
 A data frame of all brokenstick segments with start and end index of
 the segment, no_seg_tot and ID number of the segement, no_seg_dive the number
 of the segment within its dive, no_dive the ID of the dive conataining the segment,
-time the starting time of segement, drift_rate the vertical speed of the segment,
+time the starting time of segment, drift_rate the vertical speed of the segment,
 dur the duration of the segment, min_depth and max_depth the minimum and maximum
 depths of the segment, acceleration statistics (if acceleration data available)
 average roll, pitch and swimming effort and PCA rate, the mean squared residuals
@@ -72,9 +72,6 @@ tab$day <- floorPOSIXct(tab$time)
  up_only = checkbox(FALSE, label = "Show belly up only"),
  no_pca = checkbox(FALSE, label = "Show no PCA only")
 )
-
-# Drift dive example
-tdrply(plot, 1:2, no = 300, type = 'l', obj = exses)
 }
 }
 \keyword{drift}

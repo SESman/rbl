@@ -2,12 +2,18 @@
 % Please edit documentation in R/funs_brokenstick.r
 \name{max_dist_cost}
 \alias{dist_per_pt_cost}
+\alias{dzi_cost}
 \alias{max_dist_cost}
+\alias{rss_cost}
 \title{Cost functions for automatic brokenstick models.}
 \usage{
 max_dist_cost(object)
 
 dist_per_pt_cost(object)
+
+rss_cost(object)
+
+dzi_cost(object)
 }
 \arguments{
 \item{object}{Object of class inheriting from "\code{bsm}".}
@@ -31,6 +37,12 @@ is a threshold that is simple to determine and to interpret.
 average distance between observations and fitted values divided by the number of
 points used by the model. This function has does rech a minimun value but
 generally for high numbers of points.
+
+\code{rss_cost} In this function the statistic is the sum of
+squared residuals.
+
+\code{dzi_cost} In this function the statistic is the Dive Zone Index.
+See details in \code{\link{dzi}}
 }
 \seealso{
 \code{\link{optBrokenstick}}

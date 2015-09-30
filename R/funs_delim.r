@@ -402,7 +402,7 @@ bottom_delim_std <- function(depth, ledge = 0.80) {
 #' @return A data frame of all brokenstick segments with start and end index of 
 #' the segment, no_seg_tot and ID number of the segement, no_seg_dive the number 
 #' of the segment within its dive, no_dive the ID of the dive conataining the segment, 
-#' time the starting time of segement, drift_rate the vertical speed of the segment, 
+#' time the starting time of segment, drift_rate the vertical speed of the segment, 
 #' dur the duration of the segment, min_depth and max_depth the minimum and maximum 
 #' depths of the segment, acceleration statistics (if acceleration data available) 
 #' average roll, pitch and swimming effort and PCA rate, the mean squared residuals 
@@ -446,9 +446,6 @@ bottom_delim_std <- function(depth, ledge = 0.80) {
 #'  up_only = checkbox(FALSE, label = "Show belly up only"), 
 #'  no_pca = checkbox(FALSE, label = "Show no PCA only")
 #' )
-#' 
-#' # Drift dive example
-#' tdrply(plot, 1:2, no = 300, type = 'l', obj = exses)
 #' }
 drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   if (is.null(bsm))
@@ -458,7 +455,6 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   # Compute basic stats of each segment
   bsm_df <- as.data.frame(rbindlist(lapply(bsm, as.data.frame)))
   bsm_df$time <- as.POSIXct(bsm_df$st_tm, origin = "1970-01-01", tz = attr(object$tdr[ , 1], "tz"))
-  bsm_df$dur <- apply(bsm_df[ , 1:2], 1, diff.default)
   bsm_df[ , 1:2] <- lapply(bsm_df[ , 1:2], which.row, obj = object)
   bsm_df$no_seg_tot <- seq_along(bsm_df[ , 1])
   bsm_df$no_dive <- which.dive(bsm_df$time, object)
@@ -468,11 +464,11 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   # Add "bsm fit" stats 
   bsm_res <- lapply(bsm, residuals)
   bsm_pts <- df_search(lapply(bsm, function(x) x$pts))
-  mean_squared_residuals <- function(res, pts) {
-    mapply(function(st, ed) mean(res[st:ed]^2, na.rm = TRUE), 
+  residuals_squared_sum <- function(res, pts) {
+    mapply(function(st, ed) sum(res[st:ed]^2, na.rm = TRUE), 
            st = pts[ , 1], ed = pts[ ,2])
   }
-  bsm_df$msr <- unlist(Map(mean_squared_residuals, bsm_res, bsm_pts))
+  bsm_df$rss <- unlist(Map(residuals_squared_sum, bsm_res, bsm_pts))
   sd_residuals <- function(res, pts) {
     mapply(function(st, ed) sd(res[st:ed], na.rm = TRUE), st = pts[ , 1], ed = pts[ ,2])
   }
@@ -506,14 +502,13 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
     nms_acc <- c(nms_acc, "pca_rate")
   }
   
-  
   # Set names
   names(bsm_df) <- c("st_idx", "ed_idx", "no_seg_dive", "drift_rate", 
-                     "intercept", "time", "dur", "no_seg_tot", "no_dive", 
-                     "min_depth", "max_depth", "msr", "sd_res", nms_acc)
+                     "intercept", "dur", "time", "no_seg_tot", "no_dive", 
+                     "min_depth", "max_depth", "rss", "sd_res", nms_acc)
   # Reorder columns
   bsm_df[ , c("st_idx", "ed_idx", "no_seg_tot", "no_seg_dive", "no_dive", 
               "time", "drift_rate", "dur", "min_depth", "max_depth", 
-              nms_acc, "msr", "sd_res")]
+              nms_acc, "rss", "sd_res")]
 }
 
