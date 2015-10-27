@@ -400,7 +400,7 @@ plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(y)),
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
 #' bsm <- brokenstick(dv)
 #' plot(residuals(bsm)) ; abline(v = bsm$pts, h = 0)
 residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) {
@@ -569,7 +569,7 @@ max_residual <- function(x, iter = NULL, type = c("normal", "absolute")) {
 #' @references
 #' Photopoulou, T., Lovell, P., Fedak, M. A., Thomas, L. and Matthiopoulos, J. (2015). 
 #' Efficient abstracting of dive profiles using a broken-stick model. 
-#' Methods Ecol Evol 6, 278–288. Github repo: https://github.com/theoniphotopoulou/brokenstickmodel.git
+#' Methods Ecol Evol 6, 278-288. Github repo: https://github.com/theoniphotopoulou/brokenstickmodel.git
 #' @examples 
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
@@ -672,7 +672,7 @@ rss_cost <- function(object) {
 #' @rdname max_dist_cost
 #' @inheritParams max_dist_cost
 #' @details \code{dzi_cost} In this function the statistic is the Dive Zone Index. 
-#' See details in \code{\link{dzi}}
+#' See details in \code{\link{dive_zone_index}}
 #' @keywords internal brokenstick
 dzi_cost <- function(object) {
   if (max(object$pts.no) == 1) stop('"object" must have at least 3 break points. ', 
@@ -758,14 +758,14 @@ is.bsm <- function(x) is(x, "bsm")
 
 #' Print method for bsm objects
 #' @param x a bsm object
-#' @param ...
+#' @param ... for generic compatibility
 #' @export
 #' @keywords internal brokenstick
 print.bsm <- function(x, ...) print(as.data.frame(x))
 
 #' Print method for dzi objects
 #' @param x a dzi object
-#' @param ...
+#' @param ... for generic compatibility
 #' @export
 #' @keywords internal brokenstick
 print.dzi <- function(x, ...) print(x$dzi)

@@ -1,11 +1,11 @@
 Package: rbl
 Title: Bio-logging tools in R
-Description: This is a R package to help working with Bio-logging data focused 
-             on diving predators.
+Description: This is a R package to help working with Bio-logging data focused
+    on diving predators.
 Version: 1.0
 Author: Yves Le Bras <yveslebras.fr@gmail.com>
 Maintainer: Yves Le Bras <yveslebras.fr@gmail.com>
-Url: https://github.com/SESman/rbl
+URL: https://github.com/SESman/rbl
 BugReports: https://github.com/SESman/rbl/issues
 Depends:
     R (>= 3.1.1)
@@ -13,15 +13,15 @@ Suggests:
     knitr,
     sp,
     testthat,
-    manipulate, 
-    fields
+    manipulate
 Imports:
-    utils,
-    data.table, 
-    RcppRoll, 
-    signal, 
-    sqldf
+    data.table,
+    RcppRoll,
+    signal,
+    sqldf,
+    fields
 License: MIT + file LICENSE
 LazyData: true
 Roxygen: list(wrap = FALSE)
 VignetteBuilder: knitr
+RoxygenNote: 5.0.0

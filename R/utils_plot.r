@@ -1,5 +1,5 @@
 #' @title Color helpers
-#'
+#' @description Set alpha transparency parameter of input colors.
 #' @param col A vector of colors to transform.
 #' @param factor A value ranging between 0 and 1 decribing the strenght of
 #' the effet.

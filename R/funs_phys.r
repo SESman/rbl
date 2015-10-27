@@ -66,22 +66,19 @@ is_day <- function (time, lat, lon, elevlim = c(-18, 18), type = c('character', 
 #' @seealso \code{\link{is_day}}
 #' @keywords internal
 #' @export
-sun_position <- function(time = NULL, lat, lon) {
+sun_position <- function(time, lat, lon) {
   !missing(lat) && !missing(lon) || stop('Please provide location information')
-
-  if (!is.null(time)) {
-    if (inherits(time, "POSIXt")) {
-      timelt <- as.POSIXlt(time)
-      time <- data.frame(Day = timelt$mday, Month = timelt$mon + 1, Year = timelt$year + 1900, 
-                         Hour = timelt$hour, Minute = timelt$min, Second = timelt$sec)
-    } else {
-      if (ncol(time) != 6) stop('"time" must have 6 columns.')
-      time <- replaceMissing(time, na.0 = NA, 0)
-      names(time) <- c("Year", "Month", "Day", "Hour", "Minute", "Second")
-    }
-    return(with(time, sunPos(Year, Month, Day, Hour, Minute, Second, lat, lon)))
+  
+  if (inherits(time, "POSIXt")) {
+    timelt <- as.POSIXlt(time)
+    time <- data.frame(Day = timelt$mday, Month = timelt$mon + 1, Year = timelt$year + 1900, 
+                       Hour = timelt$hour, Minute = timelt$min, Second = timelt$sec)
+  } else {
+    if (ncol(time) != 6) stop('"time" must have 6 columns.')
+    time <- replaceMissing(time, na.0 = NA, 0)
+    names(time) <- c("Year", "Month", "Day", "Hour", "Minute", "Second")
   }
-  sunPos(Year, Month, Day, Hour, Minute, Second, lat, lon)
+  return(with(time, sunPos(Year, Month, Day, Hour, Minute, Second, lat, lon)))
 }
 
 #' sunPos
@@ -218,6 +215,7 @@ front <- function(name = c('SACCF', 'PF', 'SAF', 'SSTF'),
     lines(Lat ~ Lon, data = df, col = col[ft], lwd = lwd, ...)
   }
 }
+globalVariables("sofronts")
 
 #' Add isobaths to an existing plot (Kerguelen area)
 #' 
@@ -242,3 +240,4 @@ isobath <- function(depths  = -1000, lty = 2, col = 'gray', plot = TRUE, ...) {
   if (plot) lines(tab, lty = lty, col = col, ...)
   invisible(tab)
 }
+globalVariables("kerbathy")

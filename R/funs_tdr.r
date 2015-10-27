@@ -155,7 +155,7 @@ elt_delim <- function(elt, no, delim) {
 #' str(tmp <- ty_delim("-&(__)|(/~)&//", no = 60:62))
 ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
   all(sapply(ty, is.character)) || stop('"ty" must be a character')
-  if (length(ty) > 1) return(lapply(ty, tydelim, no = no, obj = obj, no_match = no_match))
+  if (length(ty) > 1) return(lapply(ty, ty_delim, no = no, obj = obj, no_match = no_match))
   no <- no_interpreter(no, obj)
   ty_bak <- ty
   ty <- ty_interpreter(ty, all = TRUE)
@@ -411,6 +411,7 @@ tdrexpand <- function(x, ty = "!_/", na_value = NA, obj = ind()) {
   
   as.vector(out$V1)
 }
+globalVariables("V1")
 
 #' Apply function to subsets of a TDR dataset
 #' 
@@ -576,3 +577,4 @@ tdrply <- function(f, cl = ., ty = "!_/", no = NULL, la = NULL,
   out <- "if"(any(cnd <- sapply(out, is.null)), out[!cnd], out)
   "if"(all(!sapply(out, is.recursive)) && nUN(sapply(out, length)) == 1, unlist(out, recursive = FALSE), out)
 }
+globalVariables(".")

@@ -119,6 +119,7 @@ swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176)) {
   x <- x[ , lapply(.SD, mean, na.rm = TRUE), by = time]
   x <- x$ay
 }
+globalVariables("ay")
 
 #' Static acceleration
 #' 

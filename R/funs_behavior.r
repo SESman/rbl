@@ -5,7 +5,7 @@
 #' over time changes to a decrease in depth and then back to an increase in 
 #' depth. This creates a short period in the dive profile that is concave in 
 #' shape. Wiggles are defined as elements of the dive profile during which at 
-#' three points the vertical speed passes below 0 ms–1. (NB: If useful, 
+#' three points the vertical speed passes below 0 m/s. (NB: If useful, 
 #' certain wiggles could be ignored, e.g. using a threshold based on their 
 #' depth range or duration.). This function implements this definition of the 
 #' wiggle and is primarily intended to be used on dive profile but it can be 
@@ -43,9 +43,9 @@
 #' @param step.thres.y similar to \code{thres.y} but applies to steps only.
 #' @export
 #' @keywords behavior
-#' @references Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and 
+#' @references Halsey, L.G., Bost, C.-A., Handrich, Y. (2007) A thorough and 
 #' quantified method for classifying seabird diving behaviour. 
-#' Polar Biology, 30, 991–1004.
+#' Polar Biology, 30, 991-1004.
 #' @examples
 #' data(exses)
 #' 
@@ -248,8 +248,8 @@ straightness <- function(x, y = NULL, npts = 3) {
 
 #' @rdname straightness
 #' @export
-sinuosity <- function(x, y = NULL, pts = 3) {
-  1 / straightness(x, y, pts)
+sinuosity <- function(x, y = NULL, npts = 3) {
+  1 / straightness(x, y, npts)
 }
 
 #' Shannon entropy index on time at depth proportions

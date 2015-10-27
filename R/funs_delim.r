@@ -289,13 +289,13 @@ bottom_delim_bsm <- function(time, depth = NULL, npts = 6) {
 #' @param depth depth readings, sorted in chronological order.
 #' @param ledge depth threshold, specified as a percentage which is compared 
 #' to the maximum depth. 0.75 has been used for king pengins. For 
-#' elephant seals: about 95\% of prey catch attemps occur at depth greater 
-#' than 50\% of the maximum depth (default value 0.50).
+#' elephant seals: about 95 percent of prey catch attemps occur at depth greater 
+#' than 50 percent of the maximum depth (default value 0.50).
 #' @param vert_vel A threshold used to define the steps. 0.35 m/s has been used for 
 #' king pengins.
 #' @references Halsey, L.G., Bost, C.-A. & Handrich, Y. (2007) A thorough and 
 #' quantified method for classifying seabird diving behaviour. 
-#' Polar Biology, 30, 991–1004.
+#' Polar Biology, 30, 991-1004.
 #' @keywords internal
 #' @seealso \code{\link{wiggles}}
 #' @export
@@ -441,7 +441,7 @@ bottom_delim_std <- function(depth, ledge = 0.80) {
 #' },
 #'  dur = slider(0, 30, initial = 1.5, step = 0.25, label = "Duration (minutes)"), 
 #'  rate = slider(0, 3, initial = 3, step = 0.05, label = "Max. vertical speed (m/s)"),
-#'  swm_eff = slider(0, 0.5, initial = 0.1, step = .01, label = "Max. swimming effort (m/s³)"),
+#'  swm_eff = slider(0, 0.5, initial = 0.1, step = .01, label = "Max. swimming effort (m/s^3)"),
 #'  sd_resid = slider(0, 10, initial = 3, step = 0.1, label = "Max residual sd (m/s)"), 
 #'  up_only = checkbox(FALSE, label = "Show belly up only"), 
 #'  no_pca = checkbox(FALSE, label = "Show no PCA only")
@@ -497,7 +497,7 @@ drift_stat <- function(object, thres.bsm = 5, bsm = NULL) {
   }
   # If prey catch attempts available: pca rate info
   if ("is_pca" %in% names(object$tdr)) {
-    bsm_df$pca_rate <- tdrply(function(x) nrow(subset(per(x), value == TRUE)), 
+    bsm_df$pca_rate <- tdrply(function(x) sum(per(x)$value), 
                               "is_pca", ty = bsm_df[ , 1:2], obj = object) / bsm_df$dur
     nms_acc <- c(nms_acc, "pca_rate")
   }

@@ -112,8 +112,8 @@ correct_depth <- function (x, dur = 5000, plt = FALSE, span = 0.15, ...)
 #' Fix jumps and duplicates in TDR time stamps
 #' 
 #' @param obj The TDR dataset
-#' @param time_seq A variable to use in order to subet \code{obj} and extract 
-#' the time variable. This variable has to be in \code{POSIXct} format.
+#' @param time_seq A variable to use in order to subset \code{obj} and extract 
+#' the time column. The time variable has to be in \code{POSIXct} format.
 #' @param verbose A logical indicating if the function should be verbose.
 #' @export
 #' @details Can be use for sampling frequency <= 1 Hz.
@@ -127,6 +127,7 @@ correct_time <- function(obj, time_seq = 1, verbose = FALSE) {
   is.POSIXct(x) || stop("'x' ust be of class POSIXct.")
   seqs <- per(diff(round(x)))
   
+  # Duplicates
   if (any(seqs$value == 0)) {
     nms_tot <- names(obj)
     tm_nm <- names(obj[ , time_seq, drop = FALSE])
@@ -146,13 +147,15 @@ correct_time <- function(obj, time_seq = 1, verbose = FALSE) {
     if (verbose)
       message('Duplicated time stamp(s) were detected. The implied rows are averaged.')
   }
-  tmp <- aggregate(length ~ value, seqs, sum)
   
+  # Find sampling frequency
+  tmp <- aggregate(length ~ value, seqs, sum)
   reso <- tmp$value[which.max(tmp$length)]
+  
+  # Find jumps
   cond <- seqs$value == reso
   ok <- seqs[cond, ]
   ano <- seqs[!cond, ]
-  
   message('Sampling frequency: ', 1 / as.numeric(reso), ' Hz. ')
   if (verbose) {
     msg_tab <- setNames(ano[ , 1:3], c('from_row', 'to_row', 'time_difference'))
@@ -166,8 +169,10 @@ correct_time <- function(obj, time_seq = 1, verbose = FALSE) {
       message('No missing time stamp, object returned as is.')
     return(invisible(obj))
   } else {
-    miss_area <- Map(seq, from = x[ano$st_idx], by = 'secs', 
+    miss_area <- Map(seq, from = x[ano$st_idx], 
+                     to = x[ano$st_idx + 1] - reso, 
                      length.out = floor(as.numeric(ano$value) / as.numeric(reso)))
+    
     warning('Missing time stamp(s). ', sum(sapply(miss_area, length) - 1), ' rows added.')
     miss_area <- lapply(miss_area, function(miss_area) {
       out <- setNames(as.data.frame(matrix(nrow = length(miss_area) - 1, ncol = ncol(obj))), 

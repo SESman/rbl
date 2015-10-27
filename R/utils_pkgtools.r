@@ -19,6 +19,7 @@ delta <- function(x, ord = TRUE, na.rm = TRUE) {
 
 #' @rdname first
 #' @title Return first or last element of a list of vector
+#' @description Return first or last element of a list of vector
 #' @param x a list of vector
 #' @export
 #' @examples 
@@ -36,7 +37,7 @@ last <- function(x) x[length(x)]
 #' @param lon longitude
 #' @param lat latitude
 #' @param r radius
-#' @details Kerguelen location taken at (49.353282°S,69.354630°E)
+#' @details Kerguelen location taken at (49.353282 deg. S,69.354630 deg. E)
 #' @import fields
 #' @export
 #' @examples 
@@ -457,6 +458,7 @@ ind <- function(value, cache = FALSE) {
   }
   invisible(NULL)
 }
+globalVariables("cache")
 
 #' is.error
 #' 
