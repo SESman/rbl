@@ -1,6 +1,6 @@
 Package: rbl
-Title: Bio-logging tools in R
-Description: This is a R package to help working with Bio-logging data focused
+Title: Biologging tools in R
+Description: This is a R package to help working with biologging data focused
     on diving predators.
 Version: 1.0
 Author: Yves Le Bras <yveslebras.fr@gmail.com>
