@@ -2,7 +2,7 @@ Package: rbl
 Title: Biologging tools in R
 Description: This is a R package to help working with biologging data focused
     on diving predators.
-Version: 1.0
+Version: 0.1.25
 Author: Yves Le Bras <yveslebras.fr@gmail.com>
 Maintainer: Yves Le Bras <yveslebras.fr@gmail.com>
 URL: https://github.com/SESman/rbl

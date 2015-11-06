@@ -804,3 +804,63 @@ plot.dzi <- function(x, dz_col = "lightblue", dz_border = "blue", enumerate = TR
   
   invisible(NULL)
 }
+
+#' Subset the slots of bsm objects
+#' 
+#' \code{bsm} objects, depending on the \code{eco.mem} argument used when they were 
+#' fitted using the \code{\link{brokenstick}} function, can contain numerous slots 
+#' (detailed in \code{\link{brokenstick}}) keeping information about the high 
+#' sampling frequency data. 
+#' These information are usefull to get accurate computations in numerous cases but 
+#' need to be ignored in order to mimic abstracted dive profiles such as 
+#' those obtained by CTD-SRDL tags.
+#' This function is a utility that allows to ignore these high sampling fequency 
+#' information.
+#' 
+#' @param x a \code{bsm} object or a list of \code{bsm} objects.
+#' @param n set the number of slot to ignore as the \code{eco.mem} argument in the 
+#' \code{\link{brokenstick}} function. The default \code{n = 4} returns 
+#' abstracted dive profiles as if they were obtained from CTD-SRDL tags.
+#' @param type A character indicating how the slots are to be handled. 
+#' \code{"ignore"} put aside the solot (rename) so they are ignored by other 
+#' \code{bsm} processing functions but do not remove them. \code{"delete"} delete 
+#' them so that less memory is used to store the object. 
+#' \code{"reset"} reverse the \code{"ignore"} operation.
+#' @export
+#' @keywords brokenstick
+#' @examples 
+#' data(exses)
+#' bsm <- tdrply(brokenstick, 1:2, obj = exses)
+#' 
+#' x <- eco.mem(bsm[[1]], type = "ignore")
+#' try(predict(x)) # error
+#' x <- eco.mem(x, type = "reset")
+#' predict(x) # return fitted values of sampled time stamps
+#' identical(bsm[[1]], x)
+#' 
+#' object.size(x)
+#' object.size(eco.mem(x, type = "delete"))
+#' 
+#' # Works on lists
+#' bsm <- eco.mem(bsm, type = "ignore")
+eco.mem <- function(x, n = 4, type = c("ignore", "delete", "reset")) {
+  if (is.bsm(x)) {
+    if (n > 4) stop('"n" must be between 0 and 4.')
+    n_subset <- "if"(n != 0L, -unique(seq(8L - n + 1L, 8L)), seq_along(x))
+    type <- match.arg(type)
+    if (type == "ignore") {
+      nms <- names(x)
+      nms[-n_subset] <- paste0("ignored.", nms[-n_subset])
+      out <- setNames(x, nms)
+    } else if (type == "delete") {
+      out <- as.bsm(x[n_subset])
+    } else if (type == "reset") {
+      nms <- names(x)
+      nms[-n_subset] <- gsub("ignored\\.", "", nms[-n_subset])
+      out <- setNames(x, nms)
+    }
+    return(out)
+  } else {
+    if (is.list(x)) return(lapply(x, eco.mem))
+  }
+}

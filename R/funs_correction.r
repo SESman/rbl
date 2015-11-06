@@ -1,3 +1,22 @@
+#' Check if a dive profile is complete or truncated
+#' 
+#' @param x The depth sequence of a dive profile.
+#' @param max_diff The maximum depth difference tolerated between the start and 
+#' the end of the dive before the dive is considered as truncated.
+#' @param error Should the function give an error if a truncated dive is 
+#' encountered ?
+#' @export
+#' @examples 
+#' \dontrun{
+#' data(exses)
+#' tdrply(is_dive_truncated, "depth", error = TRUE, obj = exses)
+#' }
+is_dive_truncated <- function(x, max.diff = 5, error = FALSE) {
+  out <- abs(first(x) - last(x)) > max.diff
+  if (error && any(out)) stop("Truncated dive detected")
+  invisible(out)
+}
+
 #' Resize an individual
 #' 
 #' \code{resize} cuts a \code{ses} object: given a set of dives to discard, it 

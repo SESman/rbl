@@ -1,3 +1,62 @@
+#' Compute the time-at-depth index (TAD) of a dive
+#' 
+#' @param x input data corresponding to a dive. Can be a numeric vector of depth 
+#' records (\code{\link{time_at_depth.default}}), a subset of a \code{tdr} table 
+#' (\code{\link{time_at_depth.tdr}}) or a \code{bsm} object 
+#' (\code{\link{time_at_depth.bsm}}).
+#' @param depth_col a numeric or a character indicating which column of the TDR 
+#' table stores the depth records.
+#' @param ... for S3 methods compatibility.
+#' @details The index ranges between 0.5 (\code{"V"} shaped dive) to 1 
+#' (\code{"U"}/square shaped dive).
+#' @export
+#' @examples 
+#' data(exses)
+#' bsm_6pts <- tdrply(brokenstick, 1:2, obj = exses)
+#' # These 3 lines return the exact same result
+#' tad_highres <- tdrply(time_at_depth, 2, obj = exses)
+#' tad_highres <- tdrply(time_at_depth, 1:2, obj = exses)
+#' tad_highres <- sapply(bsm_6pts, time_at_depth) # because the "data" slot is used
+#' 
+#' # When the "data" slot is not available
+#' tad_lowres <- sapply(eco.mem(bsm_6pts), time_at_depth) # data slot is not used
+#' plot(tad_highres, tad_lowres) ; abline(0, 1, col = "red", lwd = 3)
+time_at_depth <- function(x, ...) {
+  UseMethod("time_at_depth")
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.default <-  function(x, ...) {
+  dp <- diff(range(as.numeric(x), na.rm = TRUE))
+  mean(x - min(x, na.rm = TRUE), na.rm = TRUE) / dp
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.tdr <- function(x, depth_col = "depth", ...) {
+  time_at_depth.default(x[ , depth_col])
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.bsm <- function(x, ...) {
+  if ("data" %in% names(x)) {
+    out <- time_at_depth.default(x$data[ , 2])
+  } else {
+    max(x$pts.no) >= 2 || stop("At least 3 breakpoints are needed to get a realistic TAD index.")
+    dt <- diff(range(as.numeric(x$pts.x), na.rm = TRUE))
+    dp <- diff(range(as.numeric(x$pts.y), na.rm = TRUE))
+    tm <- seq(min(x$pts.x), max(x$pts.x), by = 1)
+    dpth <- predict(x, newdata = tm)
+    out <- sum(dpth) / (dp * dt)
+  }
+  out
+}
+
 #' Count/Extract wiggles in 2D dataset.
 #' 
 #' According to Halsey et al. 2007 (see references): Wiggles are a particular 
