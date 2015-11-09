@@ -124,17 +124,20 @@ globalVariables("ay")
 #' Static acceleration
 #' 
 #' The raw acceleration is first filtered using a low pass butterworth filter. 
-#' The extracted signal is then scaled so that the norm of the the vector G is 1 at 
-#' each second.
+#' Then , the extracted signal can be scaled so that the norm of the the vector 
+#' G is 1 at each second.
 #' 
 #' @param fc Cut-off frequency for the butterworth low pass filter (Hz)
+#' @param Gscale Should the values be scaled by the norm of the static 
+#' acceleration vector ?
+#' @param agg_1hz Should the input be aggregated to 1 Hz ?
 #' @inheritParams prey_catch_attempts
 #' @return returns a data.frame with time, and X, Y and Z static accelearyion at 1 Hz.
 #' @details This filtered acceleration can be used to compute pitch and roll angles
 #' @import data.table signal
 #' @keywords raw_processing
 #' @export
-static_acc <- function(x, fs = 16, fc = 0.20) {
+static_acc <- function(x, fs = 16, fc = 0.20, Gscale = TRUE, agg_1hz = TRUE) {
   stopifnot(require("data.table"))
   stopifnot(require("signal"))
   # Generate a Butterworth filter 
@@ -147,14 +150,40 @@ static_acc <- function(x, fs = 16, fc = 0.20) {
           .SDcols = 2:4]
   
   # 1 s fixed window average + aggregate data to 1 Hz
-  x <- x[ , lapply(.SD, mean, na.rm = TRUE), by = time]
+  if (agg_1hz) {
+    x <- x[ , lapply(.SD, mean, na.rm = TRUE), by = time]
+  }
   x <- setnames(x, c('time', 'axG', 'ayG', 'azG'))
   
   # Scale axis
-  Gnorm <- sqrt(x$axG^2 + x$ayG^2 + x$azG^2)
-  x <- x[ , 2:4 := lapply(.SD, function(x) x / Gnorm), .SDcols = 2:4]
-
+  if (Gscale) {
+    Gnorm <- sqrt(x$axG^2 + x$ayG^2 + x$azG^2)
+    x <- x[ , 2:4 := lapply(.SD, function(x) x / Gnorm), .SDcols = 2:4]
+  }
+  
   as.data.frame(x)
+}
+
+#' Dynamic (Body) acceleration DBA
+#' 
+#' DBA is calculated by smoothing data for each axis to calculate the static 
+#' acceleration (\code{\link{static_acc}}), and then subtracting it from 
+#' the raw acceleration.
+#' 
+#' @param ... Parameters to be passed to \code{\link{static_acc}} (e.g \code{fc}).
+#' @inheritParams static_acc
+#' @return returns a data.frame with time, and X, Y and Z static accelearyion at 1 Hz.
+#' @details This filtered acceleration can be used to compute ODBA and VeDBA.
+#' @import data.table signal
+#' @keywords raw_processing
+dynamic_acc <- function(x, fs = 16, agg_1hz = TRUE, ...) {
+  static <- static_acc(copy(x), fs = fs, Gscale = FALSE, agg_1hz = FALSE, ...)
+  x <- x[ , `:=`(2:4, Map("-", x[ , 2:4, with = FALSE], static[ , 2:4])), with = FALSE]
+  rm(list = "static") ; gc()
+  if (agg_1hz) {
+    x <- x[ , lapply(.SD, mean, na.rm = TRUE), by = time]
+  }
+  as.data.frame(setnames(x, c("time", "axD", "ayD", "azD")))
 }
 
 #' Attitude angles from static accelation
@@ -174,4 +203,30 @@ pitch <- function(object) {
 #' @keywords raw_processing
 roll <- function(object) {
   atan2(object$ayG^2, object$azG)
+}
+
+#' Overall Dynamic Body Acceleration (ODBA)
+#' 
+#' @param object A data frame or TDR table including dynamic acceleration variables 
+#' entitled "axD", "ayD", and "azD" for X, Y, and Z axes of the accelerometer.
+#' @export
+#' @return A vector of ODBA of the same length as \code{object}.
+#' @keywords raw_processing
+overall_DBA <- function(object) {
+  object <- as.data.table(object)
+  object <- object[ , tot := abs(axD) + abs(ayD) + abs(azD)]
+  object$tot
+}
+
+#' Vectorial Dynamic Body Acceleration (VeDBA)
+#' 
+#' @param object A data frame or TDR table including dynamic acceleration variables 
+#' entitled "axD", "ayD", and "azD" for X, Y, and Z axes of the accelerometer.
+#' @export
+#' @return A vector of VeDBA of the same length as \code{object}.
+#' @keywords raw_processing
+vectorial_DBA <- function(object) {
+  object <- as.data.table(object)
+  object <- object[ , tot := sqrt(axD^2 + ayD^2 + azD^2)]
+  object$tot
 }
