@@ -4,6 +4,7 @@
 \alias{time_at_depth}
 \alias{time_at_depth.bsm}
 \alias{time_at_depth.default}
+\alias{time_at_depth.ses}
 \alias{time_at_depth.tdr}
 \title{Compute the time-at-depth index (TAD) of a dive}
 \usage{
@@ -14,9 +15,12 @@ time_at_depth(x, ...)
 \method{time_at_depth}{tdr}(x, depth_col = "depth", ...)
 
 \method{time_at_depth}{bsm}(x, ...)
+
+\method{time_at_depth}{ses}(x = ind(), depth_col = 2, ...)
 }
 \arguments{
-\item{x}{input data corresponding to a dive. Can be a numeric vector of depth
+\item{x}{input data corresponding to a dive or a \code{ses} object.
+Can be a numeric vector of depth
 records (\code{\link{time_at_depth.default}}), a subset of a \code{tdr} table
 (\code{\link{time_at_depth.tdr}}) or a \code{bsm} object
 (\code{\link{time_at_depth.bsm}}).}
@@ -40,9 +44,11 @@ bsm_6pts <- tdrply(brokenstick, 1:2, obj = exses)
 tad_highres <- tdrply(time_at_depth, 2, obj = exses)
 tad_highres <- tdrply(time_at_depth, 1:2, obj = exses)
 tad_highres <- sapply(bsm_6pts, time_at_depth) # because the "data" slot is used
+exses$stat$tad <- tad_highres <- time_at_depth(exses)
 
 # When the "data" slot is not available
 tad_lowres <- sapply(eco.mem(bsm_6pts), time_at_depth) # data slot is not used
 plot(tad_highres, tad_lowres) ; abline(0, 1, col = "red", lwd = 3)
+plot(tad ~ time, exses$stat)
 }
 

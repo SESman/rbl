@@ -1,6 +1,146 @@
+#' Depth consistency index between two dives
+#' 
+#' dri_dive2 * (max_depth_dive2 - max_depth_dive1) / max_depth_dive2
+#' 
+#' @param x input data, a \code{ses} object. 
+#' @param depth_col Character or numeric giving the column of the TDR table that 
+#' stores the depth sequence
+#' @param fmt Should the function return a vector with pairwise comparison 
+#' of dive taken in chronologic order or a dissimilarity matrix ?
+#' @param na.pad If TRUE and \code{fmt = "vector"} then a NA is appended to 
+#' the beginning of the result so that the output can be directly allocated 
+#' to the dive statistics table. If TRUE and \code{fmt = "matrix"} then the 
+#' upper triangle of the matrix is filled with NA to save memory.
+#' @param ... Arguments to be passed to \code{\link{depth_range_index}}.
+#' @details Low values indicate high consistency between the vertical areas 
+#' vistited in the bottom of the two dives (depth range and maximum depth). 
+#' Low values can incitate benthic dives.
+#' @export
+#' @keywords behavior
+#' @references Halsey, L.G., Bost, C.-A., Handrich, Y. (2007) A thorough and 
+#' quantified method for classifying seabird diving behaviour. 
+#' Polar Biology, 30, 991-1004.
+#' @examples 
+#' data(exses)
+#' exses$stat$dci <- depth_consistency_index(exses)
+#' hist(exses$stat$dci)
+#' plot(dci ~ time, exses$stat)
+#' 
+#' Mdci <- depth_consistency_index(exses, fmt = "matrix", na.pad = FALSE)
+#' image(log(Mdci + 0.001)) # Red for values close to 0
+depth_consistency_index <- function(x = ind(), depth_col = 2, fmt = c("vector", "matrix"), 
+                                    na.pad = TRUE, ...) {
+  fmt <- match.arg(fmt, c("vector", "matrix"))
+  dri <- depth_range_index(x, depth_col, ...)
+  depth_max <- tdrply(max, depth_col, ty = "_", obj = x)
+  out <- dri * abs(outer(depth_max, depth_max, "-")) / depth_max
+  
+  if (fmt == "vector") {
+    out <- c("if"(na.pad, NA, NULL), diag(out[-1, ]))
+  } else  {
+    if (na.pad) out[upper.tri(out)] <- NA
+  }
+  out
+}
+
+#' Dive/bottom symmetry index
+#' 
+#' Based on the moment where animal reaches the dive maximum depth.
+#' 
+#' @param x input data, a \code{ses} object. 
+#' @param time_col Character or numeric giving the column of the TDR table that 
+#' stores the timestamps.
+#' @param depth_col Character or numeric giving the column of the TDR table that 
+#' stores the depth sequence
+#' @param type Should the index be computed on the bottom phase only 
+#' (\code{type = "_"}) or on the complete dive profile (\code{type = "!_/"})
+#' @details The index ranges from 0 (skewed to the left) to 1 (skewed to the right).
+#' @export
+#' @keywords behavior
+#' @references Halsey, L.G., Bost, C.-A., Handrich, Y. (2007) A thorough and 
+#' quantified method for classifying seabird diving behaviour. 
+#' Polar Biology, 30, 991-1004.
+#' @examples 
+#' data(exses)
+#' exses$stat$btt.sym <- symmetry_index(exses)
+#' exses$stat$dv.sym <- symmetry_index(exses, type = "!_/")
+#' 
+#' plot(exses$stat[ , c("time", "btt.sym", "dv.sym")])
+symmetry_index <- function(x = ind(), type = c("_", "!_/"), time_col = 1, depth_col = 2) {
+  type <- match.arg(type, c("_", "!_/"))
+  depth_max.rk <- tdrply(which.max, depth_col, ty = type, obj = x)
+  depth_max.tm <- mapply("[", tdrply(identity, time_col, ty = type, obj = x), depth_max.rk)
+  
+  btt_start.tm <- tdrply(min, time_col, ty = type, obj = x)
+  btt.dur <- tdrply(delta, time_col, ty = type, obj = x, ord = FALSE)
+  
+  (depth_max.tm - btt_start.tm) / btt.dur
+}
+
+#' Depth Range Index
+#' 
+#' Vertical extent of the bottom phase 
+#' 
+#' @param x input data, a \code{ses} object. 
+#' @param depth_col Character or numeric giving the column of the TDR table that 
+#' stores the depth sequence
+#' @param probs numeric vector of length 2 giving the quantiles probabilities
+#' to be used to compute the range. Default to min and max (\code{c(0, 1)}). 
+#' \code{c(0.1, 0.9)} can be usefull in order to get estimates robust to 
+#' wrong bottom delimitation or unusually high wiggles.
+#' @param index Should the depth range be divided by the dive maximum depth (index 
+#' ranging between 0 and 1) or the absolute values be returned ?
+#' @details The index ranges from 0 (perfectly flat bottom) to 1 (large vertical 
+#' width bottom).
+#' @export
+#' @keywords behavior
+#' @references Halsey, L.G., Bost, C.-A., Handrich, Y. (2007) A thorough and 
+#' quantified method for classifying seabird diving behaviour. 
+#' Polar Biology, 30, 991-1004.
+#' @examples 
+#' data(exses)
+#' exses$stat$dri <- depth_range_index(exses)
+#' 
+#' plot(dri ~ time, exses$stat)
+depth_range_index <- function(x = ind(), depth_col = 2, probs = c(0, 1), index = TRUE) {
+  btt.rng <- tdrply(function(x) list(quantile(x, na.rm = TRUE, probs = probs)), 
+                    depth_col, ty = "_", obj = x)
+  out <- rapply(btt.rng, diff)
+  if (index) {
+    depth_max <- tdrply(max, depth_col, ty = "_", obj = x)
+    out <- out / depth_max
+  } 
+  out
+}
+
+#' Broadness index
+#' 
+#' The duration of the bottom phase divided by the duration of the dive
+#' 
+#' @param x input data, a \code{ses} object. 
+#' @param time_col Character or numeric giving the column of the TDR table that 
+#' stores the timestamps.
+#' @details The index ranges from 0 (short bottom) to 1 (long bottom).
+#' @export
+#' @keywords behavior
+#' @references Halsey, L.G., Bost, C.-A., Handrich, Y. (2007) A thorough and 
+#' quantified method for classifying seabird diving behaviour. 
+#' Polar Biology, 30, 991-1004.
+#' @examples 
+#' data(exses)
+#' exses$stat$brd <- broadness_index(exses)
+#' 
+#' plot(brd ~ time, exses$stat)
+broadness_index <- function(x = ind(), time_col = 1) {
+  dv.dur <- tdrply(delta, time_col, ty = "!_/", obj = x, ord = FALSE)
+  btt.dur <- tdrply(delta, time_col, ty = "_", obj = x, ord = FALSE)
+  btt.dur / dv.dur
+}
+
 #' Compute the time-at-depth index (TAD) of a dive
 #' 
-#' @param x input data corresponding to a dive. Can be a numeric vector of depth 
+#' @param x input data corresponding to a dive or a \code{ses} object. 
+#' Can be a numeric vector of depth 
 #' records (\code{\link{time_at_depth.default}}), a subset of a \code{tdr} table 
 #' (\code{\link{time_at_depth.tdr}}) or a \code{bsm} object 
 #' (\code{\link{time_at_depth.bsm}}).
@@ -17,10 +157,12 @@
 #' tad_highres <- tdrply(time_at_depth, 2, obj = exses)
 #' tad_highres <- tdrply(time_at_depth, 1:2, obj = exses)
 #' tad_highres <- sapply(bsm_6pts, time_at_depth) # because the "data" slot is used
+#' exses$stat$tad <- tad_highres <- time_at_depth(exses)
 #' 
 #' # When the "data" slot is not available
 #' tad_lowres <- sapply(eco.mem(bsm_6pts), time_at_depth) # data slot is not used
 #' plot(tad_highres, tad_lowres) ; abline(0, 1, col = "red", lwd = 3)
+#' plot(tad ~ time, exses$stat)
 time_at_depth <- function(x, ...) {
   UseMethod("time_at_depth")
 }
@@ -55,6 +197,13 @@ time_at_depth.bsm <- function(x, ...) {
     out <- sum(dpth) / (dp * dt)
   }
   out
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.ses <- function(x = ind(), depth_col = 2, ...) {
+  tdrply(time_at_depth.default, 2, obj = x)
 }
 
 #' Count/Extract wiggles in 2D dataset.
