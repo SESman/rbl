@@ -492,6 +492,7 @@ globalVariables("V1")
 #' tdrply(plot, 1:2, no = 50:53, la = list(col = 1:4))
 #' par(opar)
 #' 
+#' \dontrun{
 #' ## tdrply is vectorized over "f"
 #' funs <- c(min_depth = min, max_depth = max)
 #' tmp <- tdrply(funs, "depth", "_", no = 50:53, na.rm = TRUE)
@@ -501,7 +502,6 @@ globalVariables("V1")
 #' tmp <- tdrply(funs, "depth", c("!", "/", surf = "-~"), no = 50:53, na.rm = TRUE)
 #' as.data.frame(unlist(tmp, recursive = FALSE))
 #' 
-#' \dontrun{
 #' ## Assuming that some dive bottom could not be properly defined
 #' exses$delim[exses$delim$no_dive == 111, c("btt_st_idx", "btt_ed_idx")] <- c(NA, NA)
 #' # choose how to handle missing periods using "no_match".

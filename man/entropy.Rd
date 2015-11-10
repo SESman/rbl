@@ -22,13 +22,10 @@ Shannon entropy index on time at depth proportions
 \examples{
 data(exses)
 ind(exses)
-brks <- do.call(seq, as.list(c(range(exses$tdr$depth), by = 2)))
+
+brks <- do.call(seq, as.list(c(range(exses$tdr$depth, na.rm = TRUE), by = 2)))
 exses$tdr$depth_cat <- as.character(cut(exses$tdr$depth, brks))
 plot(tdrply(entropy, "depth_cat", ty = "!_/"), exses$stat$pca)
-H <- tdrply(entropy, "depth_cat", ty = "_")
-scaled_H <- tdrply(entropy, "depth_cat", ty = "_", scale = TRUE)
-plot(H, exses$stat$pca)
-plot(H, scaled_H)
 }
 \keyword{behavior}
 

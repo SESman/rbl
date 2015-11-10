@@ -11,8 +11,8 @@
 #' data(exses)
 #' tdrply(is_dive_truncated, "depth", error = TRUE, obj = exses)
 #' }
-is_dive_truncated <- function(x, max.diff = 5, error = FALSE) {
-  out <- abs(first(x) - last(x)) > max.diff
+is_dive_truncated <- function(x, max_diff = 5, error = FALSE) {
+  out <- abs(first(x) - last(x)) > max_diff
   if (error && any(out)) stop("Truncated dive detected")
   invisible(out)
 }

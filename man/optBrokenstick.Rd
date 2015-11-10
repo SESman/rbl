@@ -45,7 +45,7 @@ cost function can be used to determine the optimal number of points.
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 bsm <- optBrokenstick(dv)
 plot(bsm, add = TRUE)

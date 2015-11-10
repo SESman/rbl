@@ -21,7 +21,7 @@ stick the points are located.
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv)
 (pts <- sample(1:nrow(dv), 5))
 which.stick(bsm, pts, type = 'i')
@@ -29,7 +29,7 @@ which.stick(bsm, dv[pts, 1], type = 'x')
 
 \dontrun{
 # For the actual points of the model the result does not matter so much
-# since both of previous and next segment is valid for prediction.
+# since both of previous and next segment are valid for prediction.
 which.stick(bsm, bsm$pts, 'i')
 }
 }

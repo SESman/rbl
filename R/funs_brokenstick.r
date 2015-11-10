@@ -82,7 +82,7 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' @keywords brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' 
 #' # Syntax
 #' bsm <- brokenstick(dv$time, dv$depth)
@@ -162,7 +162,7 @@ brokenstick.formula <- function(x, y = NULL, npts = 6, start = NULL,
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' length(bsm$pts)
 #' length(update(bsm, 5)$pts)
@@ -235,7 +235,7 @@ update.bsm <- function(object, npts, allow.dup = FALSE, ...) {
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 #' plot(bsm, add = TRUE, enumerate = TRUE)
@@ -284,7 +284,7 @@ predict.bsm <- function(object, newdata, ...) {
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' (pts <- sample(1:nrow(dv), 5))
 #' which.stick(bsm, pts, type = 'i')
@@ -292,7 +292,7 @@ predict.bsm <- function(object, newdata, ...) {
 #' 
 #' \dontrun{
 #' # For the actual points of the model the result does not matter so much
-#' # since both of previous and next segment is valid for prediction.
+#' # since both of previous and next segment are valid for prediction.
 #' which.stick(bsm, bsm$pts, 'i')
 #' }
 which.stick <- function(object, pts, type = c("x", "i")) {
@@ -323,7 +323,7 @@ which.stick <- function(object, pts, type = c("x", "i")) {
 #' @details Require \code{eco.mem <= 4} (see \code{\link{bsmfit}}).
 #' @examples
 #' data(ses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 #' coef(brokenstick(dv))
 coef.bsm <- function(object, ...) {
   # Just format corresponding slots into a data.frame output
@@ -354,7 +354,7 @@ coef.bsm <- function(object, ...) {
 #' @export
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 #' plot(bsm, add = TRUE, enumerate = TRUE)
@@ -374,7 +374,7 @@ plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(y)),
   
   # Hi-Res data can be added if requested and available
   if (data) {
-    "data" %in% names(x) || stop('"data" slot is missing in "x".')
+    ("data" %in% names(x) && !is.null(x$data)) || stop('"data" slot is missing in "x".')
     lines(x$data)
   }
   
@@ -400,7 +400,7 @@ plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(y)),
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 #' bsm <- brokenstick(dv)
 #' plot(residuals(bsm)) ; abline(v = bsm$pts, h = 0)
 residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) {
@@ -447,7 +447,7 @@ residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) 
 #' @keywords brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 #' bsm <- optBrokenstick(dv)
 #' plot(bsm, add = TRUE)
@@ -499,7 +499,7 @@ optBrokenstick <- function(x, y = NULL, threshold, cost = max_dist_cost,
 #' @keywords internal brokenstick
 #' @examples 
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' max_residual(bsm, 5)
 #' 
@@ -518,7 +518,7 @@ max_residual <- function(x, iter = NULL, type = c("normal", "absolute")) {
   bsm0 <- update(x, npts)
   
   # If data slot is available use it so that any iteration can be asked
-  if ("data" %in% names(x)) {
+  if ("data" %in% names(x) && !is.null(x$data)) {
     res <- resid(bsm0)
     out <- res[which.max(abs(res))]
   } else {
@@ -572,7 +572,7 @@ max_residual <- function(x, iter = NULL, type = c("normal", "absolute")) {
 #' Methods Ecol Evol 6, 278-288. Github repo: https://github.com/theoniphotopoulou/brokenstickmodel.git
 #' @examples 
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' dzi <- dive_zone_index(bsm)
 #' 
@@ -587,7 +587,7 @@ dive_zone_index <- function(x, iter = NULL, n = NULL) {
   npts_ini > 1 || stop('"x" must have at least 3 break points.')
   iter <- iter %else% npts_ini
   rng_y <- range(x$pts.y)
-  if (has_data <- ("data" %in% names(x))) {
+  if (has_data <- ("data" %in% names(x) && !is.null(x$data))) {
     n <- nrow(x$data)
     newx <- x$data[ , 1]
   } else {
@@ -673,11 +673,12 @@ rss_cost <- function(object) {
 #' @inheritParams max_dist_cost
 #' @details \code{dzi_cost} In this function the statistic is the Dive Zone Index. 
 #' See details in \code{\link{dive_zone_index}}
+#' @export
 #' @keywords internal brokenstick
 dzi_cost <- function(object) {
   if (max(object$pts.no) == 1) stop('"object" must have at least 3 break points. ', 
                                     'Set "npmin" to 3 in "optBrokenstick"')
-  dive_zone_index(object)
+  last(dive_zone_index(object)$dzi)
 }
 
 #' Coerce brokenstick model to data.frame
@@ -710,12 +711,13 @@ as.data.frame.bsm <- function(x, row.names = NULL, ...) {
 #' summary(brokenstick(dv, npts = 12))
 summary.bsm <- function(object, ...) {
   df <- as.data.frame(object)
-  df$dur <- apply(df[ , 1:2], 1, function(object) diff(as.numeric(object)))
   print(df[ , -(1:2)])
   r2 <- 1 - (var(resid(object)) / var(object$data[ , 2]))
-  cat("\nR-squared =", r2, "\nMax residual =", maxr <- max(resid(object)), 
-      "\nMean squared resiluals =", meanr <- mean(resid(object)^2))
-  invisible(list(df = df[ , -(1:2)], r2 = r2, max_res = maxr, mean_res = meanr))
+  cat("\nR-squared =", r2, "\nMax residual =", maxr <- max_residual(object), 
+      "\nMean squared resiluals =", meanr <- mean(resid(object)^2), 
+      "\nDive Zone Index =", last((dzi <- dive_zone_index(object))$dzi))
+  invisible(list(df = df[ , -(1:2)], r2 = r2, max_res = maxr, 
+                 mean_res = meanr, dzi = dzi))
 }
 
 #' General S3 utils for bsm objects
@@ -730,7 +732,7 @@ summary.bsm <- function(object, ...) {
 #' @keywords internal brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
 #' 
 #' as.bsm(bsm$pts.x, bsm$pts.y)
@@ -780,7 +782,7 @@ print.dzi <- function(x, ...) print(x$dzi)
 #' @export
 #' @keywords brokenstick
 plot.dzi <- function(x, dz_col = "lightblue", dz_border = "blue", enumerate = TRUE, ...) {
-  has_data <- ("data" %in% names(x))
+  has_data <- ("data" %in% names(x) && !is.null(x$data))
   iter <- length(x$dzi)
   
   # Make plot drawing area

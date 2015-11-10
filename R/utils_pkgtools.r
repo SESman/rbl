@@ -40,9 +40,6 @@ last <- function(x) x[length(x)]
 #' @details Kerguelen location taken at (49.353282 deg. S,69.354630 deg. E)
 #' @import fields
 #' @export
-#' @examples 
-#' data(exses)
-#' is_at_kerguelen <- at_ker(exses$stat$lon, exses$stat$lat)
 at_ker <- function(lon, lat, r = 130) {
   stopifnot(require("fields"))
   as.vector(rdist.earth(data.frame(lon, lat), data.frame(69.354630, -49.353282), miles = FALSE)) < r

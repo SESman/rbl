@@ -19,8 +19,4 @@ Test if animal is located around Kerguelen
 \details{
 Kerguelen location taken at (49.353282 deg. S,69.354630 deg. E)
 }
-\examples{
-data(exses)
-is_at_kerguelen <- at_ker(exses$stat$lon, exses$stat$lat)
-}
 

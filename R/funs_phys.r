@@ -31,8 +31,9 @@ prof <- function(x, y = NULL, by = 5, na.rm = FALSE) {
 #' @seealso \code{\link{sun_position}}
 #' @export
 #' @examples
-#' data(exses)
+#' \dontrun{
 #' do.call(is_day, exses$stat[ , c("time", "lat", "lon")])
+#' }
 is_day <- function (time, lat, lon, elevlim = c(-18, 18), type = c('character', 'logical')) {
   all(!is.na(time)) || stop('NA not allowed in "time" argument')
   

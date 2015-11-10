@@ -24,7 +24,7 @@ ind(exses)
 n <- 65
 idx <- tdrply(bottom_delim_std, 2, "!_/", no = n)[[1]]
 tdrply(plot, 1:2, "!_/", no = n, main = n)
-tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+tdrply(function(x, st, ed, ...) points(x[st:ed, ]), 1:2, no = n, la = idx)
 }
 \keyword{internal}
 

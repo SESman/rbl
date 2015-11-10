@@ -25,8 +25,9 @@ for night and \code{NA} otherwise) OR character (\code{"Day"}, \code{"Night"},
 Use time and location to find if events occured during the day or the night
 }
 \examples{
-data(exses)
+\dontrun{
 do.call(is_day, exses$stat[ , c("time", "lat", "lon")])
+}
 }
 \seealso{
 \code{\link{sun_position}}

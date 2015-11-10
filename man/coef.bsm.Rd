@@ -23,7 +23,7 @@ Require \code{eco.mem <= 4} (see \code{\link{bsmfit}}).
 }
 \examples{
 data(ses)
-dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 coef(brokenstick(dv))
 }
 \seealso{

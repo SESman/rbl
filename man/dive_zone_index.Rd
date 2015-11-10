@@ -47,7 +47,7 @@ previous iteration.
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv)
 dzi <- dive_zone_index(bsm)
 

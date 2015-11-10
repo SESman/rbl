@@ -32,7 +32,7 @@ Require \code{eco.mem <= 4} if using \code{newdata} argument but requires
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 bsm <- brokenstick(dv)
 plot(residuals(bsm)) ; abline(v = bsm$pts, h = 0)
 }

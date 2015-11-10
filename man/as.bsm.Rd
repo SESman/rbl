@@ -26,7 +26,7 @@ General S3 utils for bsm objects
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv)
 
 as.bsm(bsm$pts.x, bsm$pts.y)

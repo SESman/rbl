@@ -40,7 +40,7 @@ Require \code{eco.mem <= 4} (see \code{\link{bsmfit}}).
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj= exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 bsm <- brokenstick(dv)
 plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 plot(bsm, add = TRUE, enumerate = TRUE)

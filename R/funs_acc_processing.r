@@ -175,6 +175,7 @@ static_acc <- function(x, fs = 16, fc = 0.20, Gscale = TRUE, agg_1hz = TRUE) {
 #' @return returns a data.frame with time, and X, Y and Z static accelearyion at 1 Hz.
 #' @details This filtered acceleration can be used to compute ODBA and VeDBA.
 #' @import data.table signal
+#' @export
 #' @keywords raw_processing
 dynamic_acc <- function(x, fs = 16, agg_1hz = TRUE, ...) {
   static <- static_acc(copy(x), fs = fs, Gscale = FALSE, agg_1hz = FALSE, ...)

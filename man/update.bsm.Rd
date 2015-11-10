@@ -23,7 +23,7 @@ Update and Re-fit a brokenstick model
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv)
 length(bsm$pts)
 length(update(bsm, 5)$pts)

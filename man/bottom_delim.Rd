@@ -35,7 +35,7 @@ dvs_bsm    <- bottom_delim(exses$tdr, method = "bsm")
 dvs_std    <- bottom_delim(exses$tdr, method = "std")
 
 # Example using the four methods
-n_dv <- 100
+n_dv <- 300
 opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 2))
 exses$delim <- dvs_vspd
 tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')

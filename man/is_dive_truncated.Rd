@@ -4,16 +4,16 @@
 \alias{is_dive_truncated}
 \title{Check if a dive profile is complete or truncated}
 \usage{
-is_dive_truncated(x, max.diff = 5, error = FALSE)
+is_dive_truncated(x, max_diff = 5, error = FALSE)
 }
 \arguments{
 \item{x}{The depth sequence of a dive profile.}
 
-\item{error}{Should the function give an error if a truncated dive is
-encountered ?}
-
 \item{max_diff}{The maximum depth difference tolerated between the start and
 the end of the dive before the dive is considered as truncated.}
+
+\item{error}{Should the function give an error if a truncated dive is
+encountered ?}
 }
 \description{
 Check if a dive profile is complete or truncated

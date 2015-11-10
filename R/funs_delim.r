@@ -144,7 +144,7 @@ dive_delim.ses <- function(obj, thres.dur = c(300, 3000), thres.depth = 15,
 #' dvs_std    <- bottom_delim(exses$tdr, method = "std")
 #' 
 #' # Example using the four methods
-#' n_dv <- 100
+#' n_dv <- 300
 #' opar <- par(no.readonly = TRUE) ; par(mfrow = c(2, 2))
 #' exses$delim <- dvs_vspd
 #' tdrply(plot, 1:2, no = n_dv, obj = exses, main = 'method = "vspd"')
@@ -306,7 +306,7 @@ bottom_delim_bsm <- function(time, depth = NULL, npts = 6) {
 #' n <- 65
 #' idx <- tdrply(bottom_delim_halsey, 1:2, "!_/", no = n)[[1]]
 #' tdrply(plot, 1:2, "!_/", no = n, main = n)
-#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+#' tdrply(function(x, st, ed, ...) points(x[st:ed, ]), 1:2, no = n, la = idx)
 bottom_delim_halsey <- function(time, depth = NULL, ledge = 0.50, vert_vel = 0.35) {
   xy <- as.data.frame(xy.coords(time, depth)[1:2])
   rks0 <- bottom_delim_std(xy$y, ledge)
@@ -341,7 +341,7 @@ bottom_delim_halsey <- function(time, depth = NULL, ledge = 0.50, vert_vel = 0.3
 #' n <- 65
 #' idx <- tdrply(bottom_delim_vspd, 1:2, "!_/", no = n)[[1]]
 #' tdrply(plot, 1:2, "!_/", no = n, main = n)
-#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+#' tdrply(function(x, st, ed, ...) points(x[st:ed, ]), 1:2, no = n, la = idx)
 bottom_delim_vspd <- function(time = NULL, y = NULL, y.type = c("depth", "vspd"), 
                               vert_vel = 0.75, w = 21) {
   y.type <- match.arg(y.type, y.type)
@@ -375,7 +375,7 @@ bottom_delim_vspd <- function(time = NULL, y = NULL, y.type = c("depth", "vspd")
 #' n <- 65
 #' idx <- tdrply(bottom_delim_std, 2, "!_/", no = n)[[1]]
 #' tdrply(plot, 1:2, "!_/", no = n, main = n)
-#' tdrply(function(x, st, ed) points(x[st:ed, ]), 1:2, no = n, la = idx)
+#' tdrply(function(x, st, ed, ...) points(x[st:ed, ]), 1:2, no = n, la = idx)
 bottom_delim_std <- function(depth, ledge = 0.80) {
   x <- abs(depth)
   ledge_depth <- max(x, na.rm = TRUE) * ledge

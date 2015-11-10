@@ -60,7 +60,7 @@ on each iteration to fit the model with specified points.
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 400, obj = exses)[[1]]
+dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 
 # Syntax
 bsm <- brokenstick(dv$time, dv$depth)
