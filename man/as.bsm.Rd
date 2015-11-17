@@ -12,7 +12,8 @@ is.bsm(x)
 \arguments{
 \item{pts.x}{x coordinates of breakpoints. If \code{pts.x} is a list then
 it is interpreted as being a \code{"bsm"} object and is returned as is with
-updated class.}
+updated class. Eventually \code{x} can be a table formated in the SMRU format
+(see details section).}
 
 \item{pts.y}{y coordinates of breakpoints}
 
@@ -24,6 +25,11 @@ updated class.}
 \description{
 General S3 utils for bsm objects
 }
+\details{
+SMRU format refers to a table with 80 columns extracted from Access
+database on the SMRU Instrumenation website. See the link in references for
+the description of the object ("dive" table, page 4).
+}
 \examples{
 data(exses)
 dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
@@ -33,6 +39,9 @@ as.bsm(bsm$pts.x, bsm$pts.y)
 as.bsm(bsm$pts.x, bsm$pts.y, residuals = "dummy")
 as.bsm(bsm)
 is.bsm(bsm)
+}
+\references{
+\url{http://www.smru.st-andrews.ac.uk/protected/specs/DatabaseFieldDescriptions.pdf}
 }
 \keyword{brokenstick}
 \keyword{internal}

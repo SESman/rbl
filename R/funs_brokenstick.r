@@ -724,10 +724,15 @@ summary.bsm <- function(object, ...) {
 #' 
 #' @param pts.x x coordinates of breakpoints. If \code{pts.x} is a list then 
 #' it is interpreted as being a \code{"bsm"} object and is returned as is with 
-#' updated class.
+#' updated class. Eventually \code{x} can be a table formated in the SMRU format 
+#' (see details section).
 #' @param pts.y y coordinates of breakpoints
 #' @param ... other BSM slots such as \code{"data"}, \code{"fitted"} or 
 #' \code{"residuals"}. See details of slots in \code{\link{brokenstick}}.
+#' @details SMRU format refers to a table with 80 columns extracted from Access 
+#' database on the SMRU Instrumenation website. See the link in references for 
+#' the description of the object ("dive" table, page 4).
+#' @references \url{http://www.smru.st-andrews.ac.uk/protected/specs/DatabaseFieldDescriptions.pdf}
 #' @export
 #' @keywords internal brokenstick
 #' @examples
@@ -739,9 +744,42 @@ summary.bsm <- function(object, ...) {
 #' as.bsm(bsm$pts.x, bsm$pts.y, residuals = "dummy")
 #' as.bsm(bsm)
 as.bsm <- function(pts.x, pts.y = NULL, ...) {
-  if (is.bsm(pts.x) || is.list(pts.x)) {
-    class(pts.x) <- c("bsm", "list")
-    return(pts.x)
+  # Names of SMRU "dive" tables. "RESIDUAL" column ???
+  nms_smru_db <- c("ref", "PTT", "CNT", "DE_DATE", "SURF_DUR", "DIVE_DUR", "MAX_DEP", 
+                   "D1", "D2", "D3", "D4", "V1", "V2", "V3", "V4", "V5", "TRAVEL_R", 
+                   "HOMEDIST", "BOTTOM", "T1", "T2", "T3", "T4", "D_SPEED", "N_DEPTHS", 
+                   "N_SPEEDS", "DEPTH_STR", "SPEED_STR", "PROPN_STR", "PERCENT_AREA", 
+                   "RESIDUAL", "GRP_NUMBER", "D5", "T5", "qc", "D6", "D7", "D8", 
+                   "D9", "D10", "D11", "D12", "D13", "D14", "D15", "D16", "D17", 
+                   "D18", "D19", "D20", "D21", "D22", "D23", "D24", "D25", "T6", 
+                   "T7", "T8", "T9", "T10", "T11", "T12", "T13", "T14", "T15", "T16", 
+                   "T17", "T18", "T19", "T20", "T21", "T22", "T23", "T24", "T25", 
+                   "ds_date", "start_lat", "start_lon", "lat", "lon")
+  
+  # Extract relevant info from SMRU "dive" table
+  if (!is.null(names(pts.x)) && all(names(pts.x) %in% nms_smru_db)) {
+    no_dive <- seq_along(pts.x[ , 1])
+    dv_dur <- pts.x$DIVE_DUR
+    dv_start <- as.POSIXct(pts.x$DE_DATE, format = "%d/%m/%Y", tz = "UTC")
+    
+    .f <- function(x, type) c(0, na.omit(unname(unlist(x))), "if"(type == "x", 100, 0))
+    
+    pts.y <- split(pts.x[ , grep("^D[0-9]+$", names(pts.x))], no_dive)
+    pts.y <- lapply(pts.y, .f, type = "y")
+    
+    pts.x <- split(pts.x[ , grep("^T[0-9]+$", names(pts.x))], no_dive)
+    pts.x <- lapply(pts.x, .f, type = "x")
+    pts.x <- Map("+", Map("*", pts.x , dv_dur / 100), dv_start)
+  }
+  
+  # Whatever it is convert it into a "bsm" object
+  if (is.list(pts.x)) {
+    if (is.bsm(pts.x)) {
+      class(pts.x) <- c("bsm", "list")
+      return(pts.x)
+    } else {
+      out <- Map(as.bsm, pts.x, pts.y)
+    }
   } else {
     slts <- list(...)
     out <- brokenstick(pts.x, pts.y, length(pts.x), eco.mem = 4)
