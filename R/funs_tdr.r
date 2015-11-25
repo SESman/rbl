@@ -544,16 +544,19 @@ tdrply <- function(f, cl = ., ty = "!_/", no = NULL, la = NULL,
   ty <- "if"(is.character(ty), ty_delim(ty, no, obj, no_match = no_match), ty)
   
   if (is.null(ty)) {
-    switch(no_match, ignore = return(NULL), na = return(NA), error = stop('Empty "ty" found (no match).'))
+    switch(no_match, 
+           ignore = return(NULL), 
+           na = return(NA), 
+           error = stop('Empty "ty" found (no match).'))
   } else if (is.data.frame(ty)) {
     data <- Map(function(st, ed) identity(obj$tdr[st:ed, cl]), ty[ , 1], ty[ , 2])
     if (is(ty, "ty")) {
       # Concatenate subset of TDR
       data <- "if"(list_depth(data) == 1, unlist(data), as.tdr(rbindlist(data)))
-      return(f(data, ...))
+      return(try(f(data, ...)))
     } else {
       # Loop on subset of TDR
-      args <- c(list(FUN = f, data, SIMPLIFY = FALSE), 
+      args <- c(list(FUN = function(...) try(f(...)), data, SIMPLIFY = FALSE), 
                 if (is.null(la)) c() else la, 
                 if (is.null(list(...))) c() else list(MoreArgs = list(...)))
       out <- do.call(mapply, args)
