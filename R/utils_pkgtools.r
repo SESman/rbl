@@ -349,6 +349,34 @@ list_depth <- function (x) {
   return(maxdepth)
 }
 
+#' Flatten a list
+#' 
+#' @param x a list
+#' @param lev the level to which the list is to be flatten. Calculated using 
+#' \code{link{list_depth}}
+#' @export
+#' @keywords internal
+#' @examples 
+#' str(x <- list(a = list(b = 1, c = list(d = 2, e = 3)), f = 4, g = list(h = list(i = 5))))
+#' str(flatten_list(x, 1))
+#' str(flatten_list(x, 2))
+flatten_list <- function(x, lev = 1) {
+  if (list_depth(x) <= lev) return(x)
+  levs <- sapply(x, list_depth) + 1
+  
+  x_copy <- x
+  offset <- 0
+  for (kk in which(levs > lev)) {
+    elt <- x_copy[[kk]]
+    kk <- kk + offset
+    x <- append(x, values = elt, after = kk)
+    x <- x[-kk]
+    offset <- offset + length(elt) - 1
+  }
+  
+  "if"(list_depth(x) <= lev, x , flatten_list(x, lev = lev))
+}
+
 #' nstr
 #' 
 #' Recursive extraction of names (such as \code{names(c(x, recursive=TRUE))}) but

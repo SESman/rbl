@@ -24,6 +24,7 @@ ind(exses)
 
 str(tmp <- ty_delim('_', no = 60))
 str(tmp <- ty_delim('_&!', no = 60))
+str(tmp <- ty_delim('_&!&~', no = 60))
 
 str(tmp <- ty_delim('_', no = 60:62))
 str(tmp <- ty_delim('!_/', no = 60:62))

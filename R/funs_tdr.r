@@ -140,6 +140,7 @@ elt_delim <- function(elt, no, delim) {
 #' 
 #' str(tmp <- ty_delim('_', no = 60))
 #' str(tmp <- ty_delim('_&!', no = 60))
+#' str(tmp <- ty_delim('_&!&~', no = 60))
 #' 
 #' str(tmp <- ty_delim('_', no = 60:62))
 #' str(tmp <- ty_delim('!_/', no = 60:62))
@@ -216,7 +217,14 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
     if (any(sapply(x, is.null))) return(NULL)
     nUN(sapply(x, length)) == 1 || stop("Inputs must have the same length. ", 
                                         'Mixed "|" and "&" operators ?')
-    out <- x[[1]]
+    
+    if (list_depth(x) == 2) {
+      # When only one no is requested set x to the good recursive level
+      x <- lapply(x, list)
+      out <- list(NA)
+    } else {
+      out <- x[[1]]
+    }
     for (rk in seq_along(out)) {
       xs <- lapply(x, function(x) x[[rk]])
       mtch <- sapply(xs, function(x) unique(x$grp_mtch))
@@ -228,8 +236,7 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
     # Concatenate inputs in a list
     x <- lapply(x, check)
     if (any(sapply(x, is.null))) return(NULL)
-    if (list_depth(x) == 2) return(x)
-    unlist(x, recursive = FALSE)
+    flatten_list(x, lev = 2)
   }
   
   # Order "ty" by token type (from basic to master)
@@ -264,6 +271,7 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
         if (txt %in% c("-", "!", "_", "/", "~")) {
           tmp[[id]] <- check(tmp[[child(id)]])
         } else {
+          # if (id == master_id) browser()
           chld <- tmp[child(id)]
           fun <- Filter(is.function, chld) %else% next
           tmp[[id]] <- fun[[1]](Filter(is.list, chld))
@@ -271,11 +279,12 @@ ty_delim <- function(ty = "!_/", no = NULL, obj = ind(), no_match = "ignore") {
       }
     }
   }
+  
   out <- check_nomtch(tmp[[max(ty$id)]], no_match, obj)
   if (is.data.frame(out)) 
-      out <- setNames(list(out), paste0(ty_bak, "#", no))
+    out <- setNames(list(out), paste0(ty_bak, "#", no))
   if (is.null(names(out))) 
-      out <- setNames(out, paste0(sapply(out, function(x) paste0(x$elt)), "#", no))
+    out <- setNames(out, paste0(sapply(out, function(x) paste0(x$elt)), "#", no))
   out <- out[order(sapply(strsplit(names(out), "#"), function(x) as.numeric(x[[2]])))]
   class(out) <- c(class(out), "ty")
   out
