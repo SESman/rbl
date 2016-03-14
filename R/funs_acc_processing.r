@@ -98,12 +98,14 @@ prey_catch_attempts <- function(x, fs = 16, fc = 2.64) {
 #' 
 #' @param fc Cut-off frequencies for the butterworth band pass filter (Hz)
 #' @inheritParams prey_catch_attempts
+#' @param rms Should the root mean square be used (instead of mean of absolute values) 
+#' when averaging the acceleration to 1 Hz ?
 #' @return returns a vector of swimming effort values at 1 Hz.
 #' @details Only Y accelerometer axe is used to compute swimming effort.
 #' @import data.table signal
 #' @export
 #' @keywords raw_processing
-swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176)) {
+swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176), rms = FALSE) {
   stopifnot(require("data.table"))
   stopifnot(require("signal"))
   # Generate a Butterworth filter 
@@ -116,7 +118,11 @@ swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176)) {
   x <- x[ , c(2, 4) := NULL, with = FALSE] # remove unused "ax" & "az" columns
   
   # 1 s fixed window average + aggregate data to 1 Hz
-  x <- x[ , lapply(.SD, mean, na.rm = TRUE), by = time]
+  if (!rms) {
+    x <- x[ , lapply(.SD, function(x) mean(abs(x), na.rm = TRUE)), by = time]
+  } else {
+    x <- x[ , lapply(.SD, function(x) sqrt(mean(x^2, na.rm = TRUE))), by = time]
+  }
   x <- x$ay
 }
 globalVariables("ay")
