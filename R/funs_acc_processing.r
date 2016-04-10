@@ -59,7 +59,7 @@ prey_catch_attempts <- function(x, fs = 16, fc = 2.64) {
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  .f <- function(x) as.numeric(filter(bf_pca, x))
+  .f <- function(x) as.numeric(filtfilt(bf_pca, x))
   x <- x[ , 2:4 := lapply(.SD, .f), .SDcols = 2:4]
   gc()
   
@@ -114,7 +114,7 @@ swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176), rms = FALSE) {
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  x <- x[ , ay := abs(as.numeric(filter(bf_swm, ay)))]
+  x <- x[ , ay := abs(as.numeric(filtfilt(bf_swm, ay)))]
   x <- x[ , c(2, 4) := NULL, with = FALSE] # remove unused "ax" & "az" columns
   
   # 1 s fixed window average + aggregate data to 1 Hz
@@ -152,7 +152,7 @@ static_acc <- function(x, fs = 16, fc = 0.20, Gscale = TRUE, agg_1hz = TRUE) {
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  x <- x[ , 2:4 := lapply(.SD, function(x) as.numeric(filter(bf_grav, x))), 
+  x <- x[ , 2:4 := lapply(.SD, function(x) as.numeric(filtfilt(bf_grav, x))), 
           .SDcols = 2:4]
   
   # 1 s fixed window average + aggregate data to 1 Hz
