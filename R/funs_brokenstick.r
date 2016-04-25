@@ -58,6 +58,10 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' is \code{NULL}, no action. Value \code{\link{na.exclude}} can be useful.
 #' @param ... Further arguments to be passed to \code{\link{bsmfit}} 
 #' such as \code{eco.mem}.
+#' @param allow.dup If \code{TRUE} the algorithm will not stop when duplicated 
+#' breakpoints are found. The output will contain a slot called \code{dup}, a 
+#' data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the 
+#' breakpoint number of the its clone among real breakpoints (\code{pts.no})
 #' @return A \code{bsm} object with (depending on \code{eco.mem}):
 #' \itemize{
 #'   \item pts.x The x values of the brokenstick points (\code{eco.mem} inefficient).
@@ -89,15 +93,22 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' bsm <- brokenstick(dv) # if two columns
 #' bsm <- brokenstick(depth ~ time, dv) 
 #' bsm <- with(dv, brokenstick(depth ~ time))
-brokenstick <- function(x, y, npts = 6, start  = NULL, na.action, ...) {
+brokenstick <- function(x, y, npts = 6, start  = NULL, na.action, 
+                        allow.dup = FALSE, ...) {
   UseMethod("brokenstick")
 }
 
 #' @inheritParams brokenstick
 #' @export
-brokenstick.default <- function(x, y = NULL, npts = 6, start = NULL, na.action, ...) {
+brokenstick.default <- function(x, y = NULL, npts = 6, 
+                                start = NULL, na.action, 
+                                allow.dup = FALSE, ...) {
   # Format input data
-  nms <- if (is.recursive(x)) {names(x)} else {c(deparse(substitute(x)), deparse(substitute(y)))}
+  nms <- if (is.recursive(x)) {
+    names(x)
+  } else {
+    c(deparse(substitute(x)), deparse(substitute(y)))
+  }
   if (any(grepl('\\$', nms))) nms <- gsub('(.*\\$)(.*$)', '\\2', nms)
   else if (any(sapply(nms, nchar) > 10)) nms <- c('x', 'y')
   xy <- setNames(as.data.frame(xy.coords(x, y)[1:2]), nms) # formated data
@@ -107,25 +118,32 @@ brokenstick.default <- function(x, y = NULL, npts = 6, start = NULL, na.action, 
   xy <- do.call(na.action, list(xy))
   
   # Broken sticks algorithm
-  pts <- `if`(is.null(start) || length(start) < 2, c(1, length(xy[ , 1L])), start)
+  pts <- "if"(is.null(start) || length(start) < 2, c(1, length(xy[ , 1L])), start)
   np <- length(pts)
   pts.no <- rep(1L, np)
+  dup.pts <- data.frame() ; ndup <- 0
   while (np < npts) {
     brkstk <- bsmfit(xy, pts)
     absRes <- abs(brkstk$residuals)
     pts <- c(pts, which.max(absRes))
-    pts.no <- c(pts.no, max(pts.no) + 1L)
+    pts.no <- c(pts.no, max(pts.no) + ndup + 1L)
     dup <- duplicated(pts)
+    dup.pts <- rbind(dup.pts, data.frame(
+      dup.no = pts.no[dup], 
+      pts.no = which(pts[!dup] == pts[dup])
+    ))
+    ndup <- nrow(dup.pts)
     pts <- pts[!dup] ; pts.no <- pts.no[!dup]
     ord <- order(pts) ; pts <- pts[ord] ; pts.no <- pts.no[ord]
-    if (any(dup)) {
-      warning('Duplicated points found. "npts" may be too high.')
-      break
+    if (ndup > 0) {
+      if (ndup == 1L) warning('Duplicated points found. "npts" may be too high.')
+      if (!allow.dup) break
     }
-    np <- length(pts)
+    np <- length(pts) + ndup
   }
   out <- bsmfit(xy, pts, ...)
   out$pts.no <- pts.no
+  out$dup    <- dup.pts
   
   # Format output
   out$na.action <- attr(xy, "na.action")

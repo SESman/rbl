@@ -4,7 +4,8 @@
 \alias{brokenstick}
 \title{Fitting brokenstick models}
 \usage{
-brokenstick(x, y, npts = 6, start = NULL, na.action, ...)
+brokenstick(x, y, npts = 6, start = NULL, na.action, allow.dup = FALSE,
+  ...)
 }
 \arguments{
 \item{x}{The x data. Note that the \code{x} values have to be sorted. Can also
@@ -29,6 +30,11 @@ contain \code{NAs}. The default is set by the \code{na.action} setting of
 \code{\link{options}}, and is \code{\link{na.fail}} if that is unset. The
 "factory-fresh" default is \code{\link{na.omit}}. Another possible value
 is \code{NULL}, no action. Value \code{\link{na.exclude}} can be useful.}
+
+\item{allow.dup}{If \code{TRUE} the algorithm will not stop when duplicated
+breakpoints are found. The output will contain a slot called \code{dup}, a
+data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the
+breakpoint number of the its clone among real breakpoints (\code{pts.no})}
 
 \item{...}{Further arguments to be passed to \code{\link{bsmfit}}
 such as \code{eco.mem}.}
