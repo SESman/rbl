@@ -1,3 +1,18 @@
+#' Check if f: X -> Y is injective
+#' 
+#' f is injective: for all (x1, x2) in X^2, f(x1) = f(x2) => x1 = x2.
+#' 
+#' @param x x data
+#' @param y y data
+#' @export
+#' @keywords internal
+is.injective <- function(x, y = NULL) {
+  xy <- as.data.frame(xy.coords(x, y)[1:2])
+  y_values <- unique(xy[ , 2])
+  nyvalues <- sapply(y_values, function(fx) nUN(xy[xy[ , 2] == fx, 1]))
+  all(nyvalues <= 1)
+}
+
 #' Compute difference between extremes in a set of observations
 #' 
 #' @param x observations

@@ -117,6 +117,18 @@ brokenstick.default <- function(x, y = NULL, npts = 6,
   if (missing(na.action)) na.action <- options("na.action")[[1]]
   xy <- do.call(na.action, list(xy))
   
+  # Check data integrity
+  # X data should be monotonous
+  if (is.unsorted(xy[ ,1]) & is.unsorted(rev(xy[ ,1]))) {
+    message("X values are not sorted.")
+  }
+  # f: Y -> X should be injective
+  if (!is.injective(xy[ ,2], xy[ ,1])) {
+    warning("Data contains different y values with same x values.", 
+            " This is not appropriate for brokenstick models and ", 
+            "will result in segments with infinite coefficients.")
+  }
+  
   # Broken sticks algorithm
   pts <- "if"(is.null(start) || length(start) < 2, c(1, length(xy[ , 1L])), start)
   np <- length(pts)
@@ -326,7 +338,14 @@ which.stick <- function(object, pts, type = c("x", "i")) {
     else if (is.na(grt) || is.na(lst)) {NA}
     else {grt}
   }
-  as.integer(mapply(.f, eql, grt, lst))
+  out <- mapply(.f, eql, grt, lst)
+  if (any((len <- sapply(out, length)) != 1)) {
+    warning("Some data points were matched by several segments.\n ", 
+            "This issue can be related to non matching duplicates in x/y data.\n ",
+            "Here, the last matching segment is chosen every time this issue show up.")
+    out <- sapply(out, last)
+  }
+  as.integer(out)
 }
 
 #' Extract brokenstick models coefficients
@@ -376,12 +395,14 @@ coef.bsm <- function(object, ...) {
 #' bsm <- brokenstick(dv) 
 #' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
 #' plot(bsm, add = TRUE, enumerate = TRUE)
-plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(y)), 
+plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(xy$y)), 
                      add = FALSE, col = (add || data) + 1, 
                      enumerate = FALSE, data = FALSE, ...) {
   # Generate BSM abstracted profile
   y <- predict(x, newdata = x$pts.x)
-  xy <- xy.coords(x$pts.x, y, "x", "y")
+  valid_pred <- is.finite(y) # May occur because of infinite bsm coefficients.
+  if (any(!valid_pred)) warning("Non-finite values were predicted. Omitting them.")
+  xy <- xy.coords(x$pts.x[valid_pred], y[valid_pred], "x", "y")
   
   # Draw it
   if (add) lines(xy, type = type, lwd = lwd, col = col, ...)

@@ -4,7 +4,7 @@
 \alias{plot.bsm}
 \title{Plot brokenstick models}
 \usage{
-\method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(y)),
+\method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
   add = FALSE, col = (add || data) + 1, enumerate = FALSE, data = FALSE,
   ...)
 }
