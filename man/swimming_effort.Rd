@@ -4,7 +4,7 @@
 \alias{swimming_effort}
 \title{Compute swimming effort}
 \usage{
-swimming_effort(x, fs = 16, fc = c(0.4416, 1.0176))
+swimming_effort(x, fs = 16, fc = c(0.4416, 1.0176), rms = FALSE)
 }
 \arguments{
 \item{x}{3 axes acceleration table with time in the first column and acceleration
@@ -14,6 +14,9 @@ axes in the following columns. Variables must be entitled "time" for time,
 \item{fs}{sampling frequency of the input data (Hz).}
 
 \item{fc}{Cut-off frequencies for the butterworth band pass filter (Hz)}
+
+\item{rms}{Should the root mean square be used (instead of mean of absolute values)
+when averaging the acceleration to 1 Hz ?}
 }
 \value{
 returns a vector of swimming effort values at 1 Hz.
