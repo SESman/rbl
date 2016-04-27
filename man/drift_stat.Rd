@@ -42,37 +42,27 @@ these variables from the raw acceleration readings.
 }
 \examples{
 data(exses)
-tab <- drift_stat(exses)
+ind(exses)
+exses$drift <- drift_stat(exses)
 
-\dontrun{
-require(manipulate)
-manipulate(
-{
-tab$day <- floorPOSIXct(tab$time)
- cnd <- tab$dur >= dur * 60 &
-        abs(tab$drift_rate) <= rate &
-        tab$swm_eff <= swm_eff &
-        tab$sd_res <= sd_resid
- cnd <- "if"(no_pca, cnd & tab$pca_rate == 0, cnd)
- belly_up <- abs(tab$roll) >= 90
- if (up_only) cnd <- cnd & belly_up
- na_cnd <- is.na(cnd)
- cnd <- ifelse(is.na(cnd), TRUE, cnd)
- pts_col <- ifelse(belly_up[cnd], "red", "black")
- pts_col <- ifelse(na_cnd, "blue", pts_col)
- pts_shape <- ifelse(na_cnd, 20, 1)
- plot(drift_rate ~ time, tab[cnd, ], col = pts_col, pch = pts_shape,
-      xlim = range(tab$time), ylim = c(-3, 3))
- abline(h = 0, col = 'gray')
-},
- dur = slider(0, 30, initial = 1.5, step = 0.25, label = "Duration (minutes)"),
- rate = slider(0, 3, initial = 3, step = 0.05, label = "Max. vertical speed (m/s)"),
- swm_eff = slider(0, 0.5, initial = 0.1, step = .01, label = "Max. swimming effort (m/s^3)"),
- sd_resid = slider(0, 10, initial = 3, step = 0.1, label = "Max residual sd (m/s)"),
- up_only = checkbox(FALSE, label = "Show belly up only"),
- no_pca = checkbox(FALSE, label = "Show no PCA only")
-)
-}
+# Filter drift segments from drift_stat output table
+is_drift <- with(exses$drift, dur >= 100 & drift_rate \%bw\% c(-0.4, 0.6) & abs(roll) >= 90)
+tmp <- exses$drift[is_drift, ]
+
+# Time series are good way to check drift segments selection
+plot(drift_rate ~ time, tmp, ylim = c(-0.4, 0.6))
+
+# Various ways to save result to slots of exses
+exses$drift         <- tmp
+exses$no_drift_dive <- unique(tmp$no_dive)
+exses$tdr$is_drift  <- tdrexpand(rep(TRUE, nrow(tmp)), ty = tmp, na_value = FALSE)
+exses$stat$is_drift <- exses$stat$no_dive \%in\% exses$no_drift_dive
+
+# Plot a sample
+par(mfrow = c(3,3))
+no_drft <- sample(exses$no_drift_dive, 9, replace = FALSE)
+tdrply(plot, c("time", "depth", "is_drift"), no = no_drft, la = list(main = no_drft))
+par(mfrow = c(1,1))
 }
 \keyword{drift}
 

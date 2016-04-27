@@ -401,6 +401,7 @@ tdrexpand <- function(x, ty = "!_/", na_value = NA, obj = ind()) {
     ty$no <- try(ty[ , 3], silent = TRUE) %else% seq_along(ty$grp)
     ty$mrg <- paste0(ty$grp, ty$no)
     ty <- as.data.table(ty)
+    n <- nrow(ty)
   } else {
     stop('"ty" must be a character or a data frame.')
   }
