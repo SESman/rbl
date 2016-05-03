@@ -1,6 +1,6 @@
 #' Subset dive numbers with values as using indices
 #' 
-#' @param x a numeric or logical.
+#' @param x a numeric or logical vector, or a delim table.
 #' @param obj a "ses" object.
 #' @return vector of selected dive numbers.
 #' @export
@@ -16,10 +16,15 @@
 #' 
 #' no_interpreter(1:10)    # returns dive numbers 1:10
 #' no_interpreter(-(1:10)) # all dive number returned but 1:10
+#' 
+#' # x can be a "delim" table
+#' no_interpreter(exses$delim)
 no_interpreter <- function(x, obj = ind()) {
   no <- obj$no_dive
   if (is.null(no)) no <- obj$delim$no_dive[obj$delim$no_dive > 0]
-  if (is.null(x)) {
+  if (is(x, "per")) {
+    return(x$no_dive[x$no_dive > 0])
+  } else if (is.null(x)) {
     return(no)
   } else if (is.logical(x)) {
     any(x) || stop('At least one element of "no" should be TRUE.')

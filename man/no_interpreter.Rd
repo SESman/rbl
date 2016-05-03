@@ -7,7 +7,7 @@
 no_interpreter(x, obj = ind())
 }
 \arguments{
-\item{x}{a numeric or logical.}
+\item{x}{a numeric or logical vector, or a delim table.}
 
 \item{obj}{a "ses" object.}
 }
@@ -28,6 +28,9 @@ no_interpreter(NULL)
 
 no_interpreter(1:10)    # returns dive numbers 1:10
 no_interpreter(-(1:10)) # all dive number returned but 1:10
+
+# x can be a "delim" table
+no_interpreter(exses$delim)
 }
 \keyword{internal}
 \keyword{tdr_interpreter}
