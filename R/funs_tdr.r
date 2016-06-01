@@ -383,6 +383,7 @@ check_nomtch <- function(x, no_match, obj = ind()) {
 #' duplicate x values along TDR rows.
 #' @param na_value the NA value to be used (0 is can be useful).
 #' @param obj a "ses" object
+#' @param ... arguments to be passed to \code{merge.data.table}.
 #' @return a vector of the same length as the number of rows in the tdr table of 
 #' "obj".
 #' @export
@@ -393,7 +394,7 @@ check_nomtch <- function(x, no_match, obj = ind()) {
 #' ind(exses)
 #' exses$tdr$no_btt <- tdrexpand(exses$stat$no_dive, "_")
 #' exses$tdr$no_dive  <- tdrexpand(exses$stat$no_dive, "!_/")
-tdrexpand <- function(x, ty = "!_/", na_value = NA, obj = ind()) {
+tdrexpand <- function(x, ty = "!_/", na_value = NA, obj = ind(), ...) {
   if (is.character(ty)) {
     length(ty) == 1 || stop('"ty" must be of length = 1')
     !all(c(grepl("-", ty), grepl("~", ty))) || stop('"ty" can not contain "-" and "~"')
@@ -411,7 +412,7 @@ tdrexpand <- function(x, ty = "!_/", na_value = NA, obj = ind()) {
     stop('"ty" must be a character or a data frame.')
   }
   n == length(x) || stop('"x" has an incorrect length')
-  ty <- merge(ty, data.table(mrg = unique(ty$mrg), val = x), by = "mrg")
+  ty <- merge(ty, data.table(mrg = unique(ty$mrg), val = x), by = "mrg", ...)
   ty <- as.data.frame(ty)
   
   # Pre-allocate memory

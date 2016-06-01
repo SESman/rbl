@@ -4,7 +4,7 @@
 \alias{tdrexpand}
 \title{Expand a summary variable to the length of TDR data}
 \usage{
-tdrexpand(x, ty = "!_/", na_value = NA, obj = ind())
+tdrexpand(x, ty = "!_/", na_value = NA, obj = ind(), ...)
 }
 \arguments{
 \item{x}{variable to expand.}
@@ -15,6 +15,8 @@ duplicate x values along TDR rows.}
 \item{na_value}{the NA value to be used (0 is can be useful).}
 
 \item{obj}{a "ses" object}
+
+\item{...}{arguments to be passed to \code{merge.data.table}.}
 }
 \value{
 a vector of the same length as the number of rows in the tdr table of
