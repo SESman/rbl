@@ -5,7 +5,7 @@
 \title{Fitting brokenstick models}
 \usage{
 brokenstick(x, y, npts = 6, start = NULL, na.action, allow.dup = FALSE,
-  ...)
+  not.inj.action = c("ignore", "null", "error"), ...)
 }
 \arguments{
 \item{x}{The x data. Note that the \code{x} values have to be sorted. Can also
@@ -35,6 +35,8 @@ is \code{NULL}, no action. Value \code{\link{na.exclude}} can be useful.}
 breakpoints are found. The output will contain a slot called \code{dup}, a
 data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the
 breakpoint number of the its clone among real breakpoints (\code{pts.no})}
+
+\item{not.inj.action}{What should be done when \code{f: y -> x} is not injective.}
 
 \item{...}{Further arguments to be passed to \code{\link{bsmfit}}
 such as \code{eco.mem}.}

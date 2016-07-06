@@ -62,6 +62,8 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' breakpoints are found. The output will contain a slot called \code{dup}, a 
 #' data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the 
 #' breakpoint number of the its clone among real breakpoints (\code{pts.no})
+#' @param not.inj.action What should be done when \code{f: y -> x} is not injective.  
+#' 
 #' @return A \code{bsm} object with (depending on \code{eco.mem}):
 #' \itemize{
 #'   \item pts.x The x values of the brokenstick points (\code{eco.mem} inefficient).
@@ -94,7 +96,8 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' bsm <- brokenstick(depth ~ time, dv) 
 #' bsm <- with(dv, brokenstick(depth ~ time))
 brokenstick <- function(x, y, npts = 6, start  = NULL, na.action, 
-                        allow.dup = FALSE, ...) {
+                        allow.dup = FALSE, 
+                        not.inj.action = c("ignore", "null", "error"), ...) {
   UseMethod("brokenstick")
 }
 
@@ -102,7 +105,8 @@ brokenstick <- function(x, y, npts = 6, start  = NULL, na.action,
 #' @export
 brokenstick.default <- function(x, y = NULL, npts = 6, 
                                 start = NULL, na.action, 
-                                allow.dup = FALSE, ...) {
+                                allow.dup = FALSE, 
+                                not.inj.action = c("ignore", "null", "error"), ...) {
   # Format input data
   nms <- if (is.recursive(x)) {
     names(x)
@@ -124,9 +128,17 @@ brokenstick.default <- function(x, y = NULL, npts = 6,
   }
   # f: Y -> X should be injective
   if (!is.injective(xy[ ,2], xy[ ,1])) {
+    not.inj.action <- match.arg(not.inj.action, not.inj.action)
+    if (not.inj.action == "error") {
+      stop("Data contains different y values with same x values.", 
+              " This is not appropriate for brokenstick models and ", 
+              "will result in segments with infinite coefficients.")
+    } else {
     warning("Data contains different y values with same x values.", 
             " This is not appropriate for brokenstick models and ", 
             "will result in segments with infinite coefficients.")
+      if (not.inj.action == "null") return(NULL)
+    }
   }
   
   # Broken sticks algorithm
@@ -821,7 +833,8 @@ as.bsm <- function(pts.x, pts.y = NULL, ...) {
     }
   } else {
     slts <- list(...)
-    out <- brokenstick(pts.x, pts.y, length(pts.x), eco.mem = 4)
+    pts.x <- as.numeric(pts.x)
+    out <- brokenstick(pts.x, pts.y, length(pts.x), eco.mem = 4, not.inj.action = "null")
     out[names(slts)] <- slts
   }
   out
