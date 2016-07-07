@@ -4,9 +4,8 @@
 \alias{plot.bsm}
 \title{Plot brokenstick models}
 \usage{
-\method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
-  add = FALSE, col = (add || data) + 1, enumerate = FALSE, data = FALSE,
-  ...)
+plot.bsm(x, type = "b", lwd = 2, ylim = rev(range(xy$y)), add = FALSE,
+  col = (add || data) + 1, enumerate = FALSE, data = FALSE, ...)
 }
 \arguments{
 \item{x}{\code{bsm} object to plot, typically result from \code{\link{brokenstick}}

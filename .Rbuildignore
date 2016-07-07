@@ -9,3 +9,4 @@
 .git/*
 .README.md
 desktop.ini
+build_windows.r

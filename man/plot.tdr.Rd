@@ -4,7 +4,7 @@
 \alias{plot.tdr}
 \title{plot for TDR data}
 \usage{
-\method{plot}{tdr}(x, type = "l", ...)
+plot.tdr(x, type = "l", ...)
 }
 \arguments{
 \item{x}{TDR data}

@@ -1,10 +1,11 @@
-year <- sub("-.*", "", meta$Date)
-note <- sprintf("R package version %s", meta$Version)
-
-bibentry(bibtype = "Manual",
-         title = "{rbl}: Biologging tools for diving predators",
+bibentry(bibtype = "misc",
+         title = "{rbl}: Biologging tools for diving predators in R",
          author = person("Yves", "Le Bras"),
-         year = year,
-         note = note,
+         year = build_year,
+         note = build_version, 
          url = "https://github.com/SESman/rbl",
-         textVersion = paste0("Yves Le Bras (", year, "). rbl: Biologging tools for diving predators. ", note, ". URL https://github.com/SESman/rbl."))
+         textVersion = paste0("Yves Le Bras ",
+         "(", build_year, "). ",
+         "rbl: Biologging tools for diving predators in R. ", 
+         build_version, ". ",
+         "URL: https://github.com/SESman/rbl"))

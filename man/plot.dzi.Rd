@@ -4,8 +4,8 @@
 \alias{plot.dzi}
 \title{Plot method for "dzi" objects}
 \usage{
-\method{plot}{dzi}(x, dz_col = "lightblue", dz_border = "blue",
-  enumerate = TRUE, ...)
+plot.dzi(x, dz_col = "lightblue", dz_border = "blue", enumerate = TRUE,
+  ...)
 }
 \arguments{
 \item{x}{a \code{"dzi"} object}

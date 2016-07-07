@@ -1,5 +1,5 @@
 Package: rbl
-Title: Biologging tools for diving predators
+Title: Biologging tools for diving predators in R
 Description: This is a R package to help working with biologging data focused
     on diving predators.
 Version: 0.1.28
