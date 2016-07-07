@@ -5,7 +5,7 @@
 \title{Fitting brokenstick models}
 \usage{
 brokenstick(x, y, npts = 6, start = NULL, na.action, allow.dup = FALSE,
-  not.inj.action = c("ignore", "null", "error"), ...)
+  not.inj.action = c("ignore", "null", "error"), sort.data = FALSE, ...)
 }
 \arguments{
 \item{x}{The x data. Note that the \code{x} values have to be sorted. Can also
@@ -37,6 +37,9 @@ data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the
 breakpoint number of the its clone among real breakpoints (\code{pts.no})}
 
 \item{not.inj.action}{What should be done when \code{f: y -> x} is not injective.}
+
+\item{sort.data}{Should the data be sorted according to \code{x} values (when they
+are not) before fitting the broken-stick model.}
 
 \item{...}{Further arguments to be passed to \code{\link{bsmfit}}
 such as \code{eco.mem}.}

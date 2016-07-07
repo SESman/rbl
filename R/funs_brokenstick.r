@@ -62,7 +62,9 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' breakpoints are found. The output will contain a slot called \code{dup}, a 
 #' data.frame with the breakpoint number of the duplicates (\code{dup.no}) and the 
 #' breakpoint number of the its clone among real breakpoints (\code{pts.no})
-#' @param not.inj.action What should be done when \code{f: y -> x} is not injective.  
+#' @param not.inj.action What should be done when \code{f: y -> x} is not injective.
+#' @param sort.data Should the data be sorted according to \code{x} values (when they 
+#' are not) before fitting the broken-stick model.
 #' 
 #' @return A \code{bsm} object with (depending on \code{eco.mem}):
 #' \itemize{
@@ -97,7 +99,8 @@ bsmfit <- function(xy, pts, eco.mem = 0L) {
 #' bsm <- with(dv, brokenstick(depth ~ time))
 brokenstick <- function(x, y, npts = 6, start  = NULL, na.action, 
                         allow.dup = FALSE, 
-                        not.inj.action = c("ignore", "null", "error"), ...) {
+                        not.inj.action = c("ignore", "null", "error"), 
+                        sort.data = FALSE, ...) {
   UseMethod("brokenstick")
 }
 
@@ -106,7 +109,8 @@ brokenstick <- function(x, y, npts = 6, start  = NULL, na.action,
 brokenstick.default <- function(x, y = NULL, npts = 6, 
                                 start = NULL, na.action, 
                                 allow.dup = FALSE, 
-                                not.inj.action = c("ignore", "null", "error"), ...) {
+                                not.inj.action = c("ignore", "null", "error"), 
+                                sort.data = FALSE, ...) {
   # Format input data
   nms <- if (is.recursive(x)) {
     names(x)
@@ -125,6 +129,7 @@ brokenstick.default <- function(x, y = NULL, npts = 6,
   # X data should be monotonous
   if (is.unsorted(xy[ ,1]) & is.unsorted(rev(xy[ ,1]))) {
     message("X values are not sorted.")
+    if (sort.data) xy <- xy[order(xy[ ,1]), ]
   }
   # f: Y -> X should be injective
   if (!is.injective(xy[ ,2], xy[ ,1])) {
@@ -146,7 +151,13 @@ brokenstick.default <- function(x, y = NULL, npts = 6,
   np <- length(pts)
   pts.no <- rep(1L, np)
   dup.pts <- data.frame() ; ndup <- 0
+  niter <- 0
   while (np < npts) {
+    niter <- niter + 1
+    if (niter > npts) {
+      warning("Infinite loop issue. brokenstick returns NULL.")
+      return(NULL)
+    }
     brkstk <- bsmfit(xy, pts)
     absRes <- abs(brkstk$residuals)
     pts <- c(pts, which.max(absRes))
@@ -834,7 +845,7 @@ as.bsm <- function(pts.x, pts.y = NULL, ...) {
   } else {
     slts <- list(...)
     pts.x <- as.numeric(pts.x)
-    out <- brokenstick(pts.x, pts.y, length(pts.x), eco.mem = 4, not.inj.action = "null")
+    out <- brokenstick(pts.x, pts.y, length(pts.x), eco.mem = 4, not.inj.action = "null", sort.data = TRUE)
     out[names(slts)] <- slts
   }
   out
