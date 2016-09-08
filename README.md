@@ -53,7 +53,7 @@ Basic usage of `tdrply`:
 
 `tdrply(f = function to apply, cl = TDR columns, ty = dive cycle part, no = dive number, ... = other arguments to f)`
 
-```S
+```R
 data(exses) # Load the package example dataset
 ind(ses)    # Set it as default individual to avoid writing its name everytime
 
@@ -67,7 +67,7 @@ tdrply(max, "depth", ty = "!_/", no = 400, na.rm = TRUE)
 ```
 
 Usage of `ty` argument
-```S
+```R
 # Average pitch angles of (descent + ascent) phases of dives no 400 to 405
 # ty = "!/" returns a single vectors with results computed on (descent + ascent) 
 tdrply(mean, "pitch", ty = "!/", no = 400:405)
@@ -95,7 +95,7 @@ tdrply(mean, "pitch", ty = c("!", "/"), no = 400:405)
 ```
 
 Quick fitting and plotting of brokenstick model
-```S
+```R
 # 6 breakpoints BSM (and BSM plot) of dive number 477 to 480
 bsm <- tdrply(brokenstick, c("time", "depth"), ty = "!_/", no = 477:480, npts = 6)
 par(mfrow = c(2, 2), mar = c(4, 4, .2, .2))
@@ -108,7 +108,7 @@ lapply(bsm, plot,
 ![Brokenstick models (dives 477 to 480)](http://oi67.tinypic.com/4rdrbk.jpg "Brokenstick models (dives 477 to 480)")
 
 Count and visualize wiggles in a dive
-```S
+```R
 # Wiggles in dive no 480
 par(mfrow = c(1, 1))
 tdrply(wiggles, c("time", "depth"), ty = "!_/", no = 480, 
@@ -121,7 +121,7 @@ tdrply(wiggles, c("time", "depth"), ty = "!_/", no = 480,
 ![Wiggles in dive 480](http://oi64.tinypic.com/2ic5ci1.jpg "Wiggles in dive 480")
 
 Plot dive profiles and compute behavioral variables
-```S
+```R
 # Profile with Prey Catch Attempts of dive number 480
 # The third variable "is_pca" is color coded TRUE is indicated by red color.
 tdrply(plot, c("time", "depth", "is_pca"), ty = "!_/", no = 480, 
@@ -153,7 +153,7 @@ tdrply(sinuosity, c("time", "depth"), ty = "_", no = 480)
 
 https://github.com/SESman/rbl/releases.
 
-```S
+```R
 #### Install using dowloaded binaries ####
 install.packages("path/to/the/downloaded/binary.extension", repos = NULL)
 
