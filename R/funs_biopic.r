@@ -112,7 +112,7 @@ biolum_events <- function(x, sensitivity = 1.26, max_light = exp(-20)) {
   potble <- potble[potble$value %in% TRUE, ]
   
   # Compute peak light ratio
-  potble$st_idx <- potble$st_idx - 1
+  potble$st_idx <- potble$st_idx
   potble$start_time  <- x[potble$st_idx, 1]
   potble$end_time    <- x[potble$ed_idx, 1]
   potble$start_light <- x[potble$st_idx, light]
