@@ -24,7 +24,7 @@ read.wcih <- function(x, dt = TRUE, ...) {
     "External Temperature" = "temp", "Light Level" = "light", 
     "int aX" = "ax", "int aY" = "ay", "int aZ" = "az", 
     "int mX" = "mx", "int mY" = "my", "int mZ" = "mz", 
-    "Velocity" = "spd"
+    "Velocity" = "spd", "Internal Temperature" = "itemp"
   )
   
   x <- setnames(as.data.table(x), new_nms[nms])
