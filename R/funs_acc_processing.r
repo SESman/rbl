@@ -55,11 +55,11 @@ prey_catch_attempts <- function(x, fs = 16, fc = 2.64) {
   stopifnot(require("RcppRoll"))
   # Generate Butterworth filter 
   # Critical frequencies of the filter: f_cutoff / (f_sampling/2)
-  bf_pca  <- butter(3, W = fc / (0.5*fs), type = 'high')
+  bf_pca <- signal::butter(3, W = fc / (0.5*fs), type = 'high')
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  .f <- function(x) as.numeric(filtfilt(bf_pca, x))
+  .f <- function(x) as.numeric(signal::filtfilt(bf_pca, x))
   x <- x[ , 2:4 := lapply(.SD, .f), .SDcols = 2:4]
   gc()
   
@@ -110,11 +110,11 @@ swimming_effort <- function(x, fs = 16, fc = c(0.4416, 1.0176), rms = FALSE) {
   stopifnot(require("signal"))
   # Generate a Butterworth filter 
   # Critical frequencies of the filter: f_filter / (f_sampling/2)
-  bf_swm  <-  butter(3, W = fc / (0.5*fs), type = 'pass')
+  bf_swm <- signal::butter(3, W = fc / (0.5*fs), type = 'pass')
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  x <- x[ , ay := abs(as.numeric(filtfilt(bf_swm, ay)))]
+  x <- x[ , ay := abs(as.numeric(signal::filtfilt(bf_swm, ay)))]
   x <- x[ , c(2, 4) := NULL, with = FALSE] # remove unused "ax" & "az" columns
   
   # 1 s fixed window average + aggregate data to 1 Hz
@@ -148,11 +148,11 @@ static_acc <- function(x, fs = 16, fc = 0.20, Gscale = TRUE, agg_1hz = TRUE) {
   stopifnot(require("signal"))
   # Generate a Butterworth filter 
   # Critical frequencies of the filter: f_filter / (f_sampling/2)
-  bf_grav  <-  butter(3, W = fc / (0.5*fs), type = 'low')
+  bf_grav <- signal::butter(3, W = fc / (0.5*fs), type = 'low')
   
   # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
-  x <- x[ , 2:4 := lapply(.SD, function(x) as.numeric(filtfilt(bf_grav, x))), 
+  x <- x[ , 2:4 := lapply(.SD, function(x) as.numeric(signal::filtfilt(bf_grav, x))), 
           .SDcols = 2:4]
   
   # 1 s fixed window average + aggregate data to 1 Hz
