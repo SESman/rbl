@@ -128,6 +128,69 @@ correct_depth <- function (x, dur = 5000, plt = FALSE, span = 0.15, ...)
   ifelse(out < 0, 0, out)
 }
 
+#' Fix duplicates in TDR time stamps
+#' 
+#' @param obj The TDR dataset
+#' @param time_seq A variable to use in order to subset \code{obj} and extract 
+#' the time column. The time variable has to be in \code{POSIXct} format.
+#' @param verbose A logical indicating if the function should be verbose.
+#' @author Simon Wotherspoon, Yves Le Bras
+#' @details Table with time stamp and number of replicate of duplicates is 
+#' returned in attributes.
+#' @export
+#' @keywords internal correction
+#' @examples
+#' data(exses)
+#' tmp <- exses$tdr[c(1,1,1,2:30), ]
+#' tmp <- correct_duplicated_time(tmp)
+#' attr(tmp, "correct_time")
+correct_duplicated_time <- function(obj, time_seq = 1, verbose = FALSE) {
+  # Check time specification
+  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) {
+    stop("time_seq must specify a column of POSIXct times")
+  } else {
+    tzone <- attr(obj[ , time_seq], "tzone")
+  }
+  # Round times to nearest second
+  obj[ , time_seq] <- .POSIXct(round(as.numeric(obj[ , time_seq])), tz = tzone)
+  
+  # Fix time duplicates
+  dup <- duplicated(obj[ , time_seq])
+  if (any(dup)) {
+    # Extract indices of any duplicated row
+    rs <- which(obj[ , time_seq] %in% obj[dup, time_seq])
+    obj.dup <- obj[rs, ]
+    # Aggregate duplicates according to data type of non time columns
+    for (jj in setdiff(seq_along(obj.dup), time_seq)) {
+      if (is.numeric(obj.dup[, jj])) # mean
+        obj.dup[, jj] <- ave(obj.dup[ , jj], obj.dup[, time_seq])
+      else if (is.logical(obj.dup[ , jj])) # or
+        obj.dup[, jj] <- ave(obj.dup[ , jj], obj.dup[ , time_seq], FUN = any)
+      else { # count for factor/character
+        warning('"obj" contains non numeric/logical data. 
+                Time duplicates aggregated with table()')
+        obj.dup[, jj] <- ave(obj.dup[ , jj], obj.dup[ , time_seq], FUN = list %c% table)
+      }
+    }
+    # Replace in original then remove duplicated
+    obj[rs, ] <- obj.dup
+    obj <- obj[!dup, ]
+    # Get duplicates info
+    msg_tab <- table(obj.dup[ , time_seq])
+    if (verbose) {
+      message('Duplicated time stamp(s) were detected. These rows are averaged.
+              Details:')
+      print(msg_tab)
+    }
+  } else {
+    msg_tab <- "No duplicate found"
+  }
+  # Save info in output attributes
+  attr(obj, "correct_time")$duplicates <- msg_tab
+  
+  invisible(obj)
+}
+
 #' Fix jumps and duplicates in TDR time stamps
 #' 
 #' @param obj The TDR dataset
@@ -135,78 +198,51 @@ correct_depth <- function (x, dur = 5000, plt = FALSE, span = 0.15, ...)
 #' the time column. The time variable has to be in \code{POSIXct} format.
 #' @param verbose A logical indicating if the function should be verbose.
 #' @export
-#' @details Can be use for sampling frequency <= 1 Hz.
+#' @author Simon Wotherspoon, Yves Le Bras
+#' @details Output rows will be chronologically ordered. Table with time stamp 
+#' and number of replicate of duplicates is returned in attributes, as well as 
+#' a data frame listing "time jumps". 
 #' @keywords correction
-#' @import data.table
 #' @examples
 #' data(exses)
-#' exses$tdr <- correct_time(exses$tdr, verbose = TRUE)
+#' tmp <- rbind(exses$tdr[c(1,1,2), ], exses$tdr[-c(10, 20:30), ])
+#' tmp <- correct_time(tmp)
+#' attr(tmp, "correct_time")
 correct_time <- function(obj, time_seq = 1, verbose = FALSE) {
-  x <- obj[ , time_seq]
-  is.POSIXct(x) || stop("'x' ust be of class POSIXct.")
-  seqs <- per(diff(round(x)))
-  
-  # Duplicates
-  if (any(seqs$value == 0)) {
-    nms_tot <- names(obj)
-    tm_nm <- names(obj[ , time_seq, drop = FALSE])
-    nms <- nms_tot %w/o% tm_nm
-    
-    dup <- seqs[seqs$value == 0, ]
-    dup_obj <- Map(function(st, ed) obj[st:ed, ], dup$st_idx, dup$ed_idx + 1)
-    
-    fmla <- as.formula(paste0('cbind(', paste(nms, collapse = ','), ') ~ ', tm_nm))
-    dup_obj <- lapply(dup_obj, function(x) aggregate(fmla, x, mean)[ , nms_tot])
-    for (ii in seq_along(dup_obj)) {
-      obj[dup$st_idx[ii], ] <- dup_obj[[ii]]
-    }
-    obj <- obj[-(dup$ed_idx[ii] + 1), ]
-    x <- obj[ , time_seq]
-    seqs <- per(diff(x))
-    if (verbose)
-      message('Duplicated time stamp(s) were detected. The implied rows are averaged.')
+  # Check time specification
+  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) {
+    stop("time_seq must specify a column of POSIXct times")
+  } else {
+    tzone <- attr(obj[ , time_seq], "tzone")
   }
+  # Round times to nearest second
+  obj[ , time_seq] <- .POSIXct(round(as.numeric(obj[ , time_seq])), tz = tzone)
   
-  # Find sampling frequency
-  tmp <- aggregate(length ~ value, seqs, sum)
-  reso <- tmp$value[which.max(tmp$length)]
+  # Fix duplicated times 
+  obj <- correct_duplicated_time(obj, time_seq,verbose)
   
-  # Find jumps
-  cond <- seqs$value == reso
-  ok <- seqs[cond, ]
-  ano <- seqs[!cond, ]
-  message('Sampling frequency: ', 1 / as.numeric(reso), ' Hz. ')
+  # Get sampling interval
+  dt <- time_reso(obj[, time_seq])
+  
+  # Generate complete and ordered sequence of times
+  full_tms <- seq(min(obj[ , time_seq]), max(obj[ , time_seq]), dt)
+  # Expand data and fill in missing times.
+  idx <- match(full_tms, obj[ , time_seq])
+  # Get "jumps" locations and save info in output attributes
+  msg_tab <- subset(per(is.na(idx)), value, select = 1:2)
+  msg_tab <- data.frame(from = full_tms[msg_tab$st_idx - 1], 
+                        to = full_tms[msg_tab$ed_idx + 1])
+  msg_tab$time_diff <- msg_tab[,2] - msg_tab[,1] - 1
+  attr(obj, "correct_time")$jumps <- msg_tab
   if (verbose) {
-    msg_tab <- setNames(ano[ , 1:3], c('from_row', 'to_row', 'time_difference'))
-    msg_tab[ , 2] <- msg_tab[ , 2] + 1
     message(nrow(msg_tab), ' temporal jump(s) detected: ')
     if (nrow(msg_tab) != 0) print(msg_tab)
   }
+  # Fix jumps & sort chronologically
+  obj <- obj[idx, ]
+  obj[ , time_seq] <- full_tms
+  # Fix row names
+  row.names(obj) <- seq_along(full_tms)
   
-  if (nrow(ano) == 0) {
-    if (verbose)
-      message('No missing time stamp, object returned as is.')
-    return(invisible(obj))
-  } else {
-    miss_area <- Map(seq, from = x[ano$st_idx], 
-                     to = x[ano$st_idx + 1] - reso, 
-                     length.out = floor(as.numeric(ano$value) / as.numeric(reso)))
-    
-    warning('Missing time stamp(s). ', sum(sapply(miss_area, length) - 1), ' rows added.')
-    miss_area <- lapply(miss_area, function(miss_area) {
-      out <- setNames(as.data.frame(matrix(nrow = length(miss_area) - 1, ncol = ncol(obj))), 
-                      names(obj))
-      out[ , time_seq] <- miss_area[-1]
-      out
-    })
-    ok_area <- Map(function(st, ed) obj[st:ed, ], ok$st_idx, ok$ed_idx + 1)
-    
-    min_time <- function(x) min(x[ , time_seq])
-    seqs_order <- order(c(sapply(ok_area, min_time), sapply(miss_area, min_time)))
-    tot <- c(ok_area, miss_area)[seqs_order]
-    out <- data.table::rbindlist(tot, use.names = FALSE)
-    out <- as.data.frame(out)
-    row.names(out) <- seq(1, nrow(out))
-    return(invisible(out))
-  }
+  invisible(obj)
 }

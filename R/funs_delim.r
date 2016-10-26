@@ -1,14 +1,13 @@
 #' Sampling rate of a TDR dataset
 #' 
 #' @param x The time sequence.
-#' @param n the number of replicates to do.
 #' @param type Should the result be returned in seconds ("period") or hertz ("frequence") ?
+#' @details Sampling interval taken as the greatest common divisor of observed intervals.
+#' @author Simon Wotherspoon
 #' @keywords internal
 #' @export
-time_reso <- function(x, n = 10, type = c("period", "frequence")) {
-  iis <- sample(1:length(x), n, replace = FALSE)
-  dT <- round(unlist(lapply(Map(seq, iis, iis + 3), function(I) diff(x[I]))))
-  reso  <- median(dT)
+time_reso <- function(x, type = c("period", "frequence")) {
+  reso <- Reduce(gcd, unique(diff(sort(as.numeric(x)))))
   switch(match.arg(type), period = reso, frequence = 1 / reso)
 }
 

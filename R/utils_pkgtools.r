@@ -1,3 +1,10 @@
+#' Greatest Common Divisor
+#' 
+#' @param a, b integer vectors
+#' @export
+#' @keywords internal
+gcd <- function(a, b) ifelse(b == 0, a, gcd(b, a %% b))
+
 #' Check if f: X -> Y is injective
 #' 
 #' f is injective: for all (x1, x2) in X^2, f(x1) = f(x2) => x1 = x2.
