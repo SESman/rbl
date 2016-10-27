@@ -17,8 +17,31 @@ Sampling rate of a TDR dataset
 \details{
 Sampling interval taken as the greatest common divisor of observed intervals.
 }
+\examples{
+time_reso(seq(0, 10, by = 1/0.5), type = "freq")
+time_reso(seq(0, 10, by = 1),     type = "freq")
+time_reso(seq(0, 10, by = 1/2),   type = "freq")
+time_reso(seq(0, 10, by = 1/5),   type = "freq")
+time_reso(seq(0, 10, by = 1/16),  type = "freq")
+
+# Please notice that exact equality may not be always true 
+# due to realities of computer arithmetic
+\dontrun{
+# Assuming a sufficient number of decimales...
+repeat {
+  f <- runif(1, 0, 100)
+  tst <- seq(0, 10, by = 1/f)
+  if (length(tst) > 1) break
+}
+time_reso(tst, type = "f") == f          # is TRUE in most cases
+all.equal(time_reso(tst, type = "f"), f) # is TRUE
+}
+}
 \author{
-Simon Wotherspoon
+Yves Le Bras, Simon Wotherspoon
+}
+\seealso{
+\code{\link{all.equal}}
 }
 \keyword{internal}
 

@@ -146,13 +146,12 @@ correct_depth <- function (x, dur = 5000, plt = FALSE, span = 0.15, ...)
 #' attr(tmp, "correct_time")
 correct_duplicated_time <- function(obj, time_seq = 1, verbose = FALSE) {
   # Check time specification
-  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) {
+  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) 
     stop("time_seq must specify a column of POSIXct times")
-  } else {
-    tzone <- attr(obj[ , time_seq], "tzone")
-  }
-  # Round times to nearest second
-  obj[ , time_seq] <- .POSIXct(round(as.numeric(obj[ , time_seq])), tz = tzone)
+
+  # Round times 
+  tmp <- round(as.numeric(obj[ , time_seq]), digits = getOption("digits.secs") %else% 0)
+  obj[ , time_seq] <- .POSIXct(tmp, tz = "UTC")
   
   # Fix time duplicates
   dup <- duplicated(obj[ , time_seq])
@@ -210,16 +209,15 @@ correct_duplicated_time <- function(obj, time_seq = 1, verbose = FALSE) {
 #' attr(tmp, "correct_time")
 correct_time <- function(obj, time_seq = 1, verbose = FALSE) {
   # Check time specification
-  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) {
+  if (!(length(time_seq) == 1) && is.POSIXct(obj[ , time_seq])) 
     stop("time_seq must specify a column of POSIXct times")
-  } else {
-    tzone <- attr(obj[ , time_seq], "tzone")
-  }
-  # Round times to nearest second
-  obj[ , time_seq] <- .POSIXct(round(as.numeric(obj[ , time_seq])), tz = tzone)
+  
+  # Round times 
+  tmp <- round(as.numeric(obj[ , time_seq]), digits = getOption("digits.secs") %else% 0)
+  obj[ , time_seq] <- .POSIXct(tmp, tz = "UTC")
   
   # Fix duplicated times 
-  obj <- correct_duplicated_time(obj, time_seq,verbose)
+  obj <- correct_duplicated_time(obj, time_seq, verbose)
   
   # Get sampling interval
   dt <- time_reso(obj[, time_seq])

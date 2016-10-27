@@ -3,12 +3,50 @@
 #' @param x The time sequence.
 #' @param type Should the result be returned in seconds ("period") or hertz ("frequence") ?
 #' @details Sampling interval taken as the greatest common divisor of observed intervals.
-#' @author Simon Wotherspoon
+#' @author Yves Le Bras, Simon Wotherspoon
+#' @seealso \code{\link{all.equal}}
 #' @keywords internal
 #' @export
+#' @examples 
+#' time_reso(seq(0, 10, by = 1/0.5), type = "freq")
+#' time_reso(seq(0, 10, by = 1),     type = "freq")
+#' time_reso(seq(0, 10, by = 1/2),   type = "freq")
+#' time_reso(seq(0, 10, by = 1/5),   type = "freq")
+#' time_reso(seq(0, 10, by = 1/16),  type = "freq")
+#' 
+#' # Please notice that exact equality may not be always true 
+#' # due to realities of computer arithmetic
+#' \dontrun{
+#' # Assuming a sufficient number of decimales...
+#' repeat {
+#'   f <- runif(1, 0, 100)
+#'   tst <- seq(0, 10, by = 1/f)
+#'   if (length(tst) > 1) break
+#' }
+#' time_reso(tst, type = "f") == f          # is TRUE in most cases
+#' all.equal(time_reso(tst, type = "f"), f) # is TRUE
+#' }
 time_reso <- function(x, type = c("period", "frequence")) {
-  reso <- Reduce(gcd, unique(diff(sort(as.numeric(x)))))
-  switch(match.arg(type), period = reso, frequence = 1 / reso)
+  if (length(x) <= 1) stop("x must have a length > 1.")
+  dt <- diff(sort(as.numeric(x)))
+  gcd_reso <- Reduce(gcd, unique(dt))
+  
+  # Wildlife Computers uses duplicates instead of decimales to code for 
+  # sampling frequencies < 1 Hz. Test for such a case with freq >= 2 Hz
+  cnd <- dt == 0
+  if (mean(cnd) >= 0.5) 
+    warning('Duplicated time stamps represent a least 50% of observations.
+  They could code for a sampling frequency >= 2 Hz. 
+  Try increasing the number of decimales, see options("digits.secs")') 
+  
+  # Test for possible precision issue
+  likely_reso <- median(dt[!cnd])
+  if (!nearly_equal(likely_reso, gcd_reso))
+    warning('Sampling frequency is not safely estabished. Input data may 
+      (1) lack precision, try increasing the number of decimales (see options("digits.secs")),
+      (2) have a very large amount of missing time stamps.')
+  
+  switch(match.arg(type), period = gcd_reso, frequence = 1 / gcd_reso)
 }
 
 #' Find the dives start and end

@@ -1,9 +1,20 @@
-#' Greatest Common Divisor
+#' Vectorized predicate for near equality testing of numerics
 #' 
-#' @param a, b integer vectors
+#' @param x,y two numeric vectors
+#' @details Pairwise compariosn such as \code{`==`}.
 #' @export
 #' @keywords internal
-gcd <- function(a, b) ifelse(b == 0, a, gcd(b, a %% b))
+nearly_equal <- function(x, y) {
+  is.numeric(x) && is.numeric(y) || stop("x and y must be numerics.")
+  mapply(function(x, y) isTRUE(all.equal(x, y)), x, y)
+}
+
+#' Greatest Common Divisor
+#' 
+#' @param a,b two numeric vectors
+#' @export
+#' @keywords internal
+gcd <- function(a, b) ifelse(nearly_equal(b, 0) | nearly_equal(a, b), a, gcd(b, a %% b))
 
 #' Check if f: X -> Y is injective
 #' 

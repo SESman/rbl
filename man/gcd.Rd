@@ -7,7 +7,7 @@
 gcd(a, b)
 }
 \arguments{
-\item{a, }{b integer vectors}
+\item{a, b}{two numeric vectors}
 }
 \description{
 Greatest Common Divisor
