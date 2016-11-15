@@ -9,7 +9,7 @@ exp10 <- function(x) exp(x * log(10))
 #' 
 #' Use the equation provided by the manufacturer, Wildlife Computers.
 #' 
-#' @param x raw sensor readings
+#' @param x raw/transformed sensor readings
 #' @export
 #' @keywords light
 SI_light <- function(x) {
@@ -17,7 +17,6 @@ SI_light <- function(x) {
 }
 
 #' @rdname SI_light
-#' @param x transformed sensor readings
 #' @export
 #' @keywords light
 WC_light <- function(x) {
@@ -28,7 +27,7 @@ WC_light <- function(x) {
 #' @param x A data subset of fixed width of 11 seconds/lines.
 #' @param lightSI.nm The name of the TDR column with light values in W/cm^2.
 #' @references 
-#' Vacquié-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
+#' Vacquie-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
 #' & Guinet, C. (2012) Foraging in the Darkness of the Southern Ocean: 
 #' Influence of Bioluminescence on a Deep Diving Predator. PLoS ONE, 7, e43565.
 #' @keywords internal
@@ -62,7 +61,7 @@ biopic.qr <- function(x, lightSI.nm = "light_si") {
 #' @export
 #' @keywords light
 #' @references 
-#' Vacquié-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
+#' Vacquie-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
 #' & Guinet, C. (2012) Foraging in the Darkness of the Southern Ocean: 
 #' Influence of Bioluminescence on a Deep Diving Predator. PLoS ONE, 7, e43565.
 #' @examples 

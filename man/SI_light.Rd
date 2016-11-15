@@ -10,9 +10,7 @@ SI_light(x)
 WC_light(x)
 }
 \arguments{
-\item{x}{raw sensor readings}
-
-\item{x}{transformed sensor readings}
+\item{x}{raw/transformed sensor readings}
 }
 \description{
 Use the equation provided by the manufacturer, Wildlife Computers.

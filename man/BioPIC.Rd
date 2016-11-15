@@ -24,7 +24,7 @@ dv$light_si <- SI_light(dv$light)
 biolum_tbl <- BioPIC(dv)
 }
 \references{
-Vacquié-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
+Vacquie-Garcia, J., Royer, F., Dragon, A.-C., Viviant, M., Bailleul, F. 
 & Guinet, C. (2012) Foraging in the Darkness of the Southern Ocean: 
 Influence of Bioluminescence on a Deep Diving Predator. PLoS ONE, 7, e43565.
 }
