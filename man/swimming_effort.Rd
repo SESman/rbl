@@ -8,8 +8,8 @@ swimming_effort(x, fs = 16, fc = c(0.4416, 1.0176), rms = FALSE)
 }
 \arguments{
 \item{x}{3 axes acceleration table with time in the first column and acceleration 
-axes in the following columns. Variables must be entitled "time" for time, 
-"ax", "ay", and "az" for x, y and z accelerometer axes.}
+axes in the following columns. Variables must be entitled \code{"time"} for time, 
+\code{"ax"}, \code{"ay"}, and \code{"az"} for x, y and z accelerometer axes.}
 
 \item{fs}{sampling frequency of the input data (Hz).}
 

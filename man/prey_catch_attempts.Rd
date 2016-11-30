@@ -4,23 +4,46 @@
 \alias{prey_catch_attempts}
 \title{Identify Prey Catch attempts}
 \usage{
-prey_catch_attempts(x, fs = 16, fc = 2.64)
+prey_catch_attempts(x, fs = 16, fc = 2.64, w = 1.5, grp = NULL,
+  n_days = NULL)
 }
 \arguments{
 \item{x}{3 axes acceleration table with time in the first column and acceleration 
-axes in the following columns. Variables must be entitled "time" for time, 
-"ax", "ay", and "az" for x, y and z accelerometer axes.}
+axes in the following columns. Variables must be entitled \code{"time"} for time, 
+\code{"ax"}, \code{"ay"}, and \code{"az"} for x, y and z accelerometer axes.}
 
 \item{fs}{sampling frequency of the input data (Hz).}
 
-\item{fc}{Cut-off frequency for the butterworth high pass filter (Hz)}
+\item{fc}{Cut-off frequency for the butterworth high pass filter (Hz). Frequency 
+above which signals across x, y and z accelerometer axes are retained.}
+
+\item{w}{window width in seconds to use when applying rolling standard deviation.}
+
+\item{grp}{A vector (with same number of observation than \code{x}) 
+which provides a group identifier for observations to be treated by rolling 
+standard deviation separately. For example a dive number 
+or a \code{\link{brokenstick}}  segment number. 
+Leave as \code{NULL} to process all data as a single block.}
+
+\item{n_days}{time period (in days) over which kmeans clustering of negative 
+and positive prey catch attempt behaviours should be performed. 
+Leave as \code{NULL} to have no time grouping in kmeans generation.}
 }
 \value{
 returns a logical vector of prey catch attempts at 1 Hz frequency. 
 Value is TRUE if the record belong to prey catch attempt FALSE otherwise.
 }
 \description{
-Identify Prey Catch attempts
+Method based on Viviant et al. (2010) (see references) which was originally 
+implemented on a jaw accelerometer.
+}
+\author{
+Yves Le Bras, Samantha Cox
+}
+\references{
+Viviant, M., Trites, A. W., Rosen, D. A. S., Monestiez, P. and Guinet, C. 
+#(2010). Prey capture attempts can be detected in Steller sea lions 
+and other marine predators using accelerometers. Polar Biol 33, 713–719.
 }
 \keyword{raw_processing}
 

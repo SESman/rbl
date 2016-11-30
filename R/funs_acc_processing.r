@@ -39,59 +39,93 @@ read.wcih <- function(x, dt = TRUE, ...) {
 
 #' Identify Prey Catch attempts
 #' 
+#' Method based on Viviant et al. (2010) (see references) which was originally 
+#' implemented on a jaw accelerometer.
+#' 
 #' @param x 3 axes acceleration table with time in the first column and acceleration 
-#' axes in the following columns. Variables must be entitled "time" for time, 
-#' "ax", "ay", and "az" for x, y and z accelerometer axes.
+#' axes in the following columns. Variables must be entitled \code{"time"} for time, 
+#' \code{"ax"}, \code{"ay"}, and \code{"az"} for x, y and z accelerometer axes. 
 #' @param fs sampling frequency of the input data (Hz).
-#' @param fc Cut-off frequency for the butterworth high pass filter (Hz)
+#' @param fc Cut-off frequency for the butterworth high pass filter (Hz). Frequency 
+#' above which signals across x, y and z accelerometer axes are retained. 
+#' @param w window width in seconds to use when applying rolling standard deviation.
+#' @param grp A vector (with same number of observation than \code{x}) 
+#' which provides a group identifier for observations to be treated by rolling 
+#' standard deviation separately. For example a dive number 
+#' or a \code{\link{brokenstick}}  segment number. 
+#' Leave as \code{NULL} to process all data as a single block.
+#' @param n_days time period (in days) over which kmeans clustering of negative 
+#' and positive prey catch attempt behaviours should be performed. 
+#' Leave as \code{NULL} to have no time grouping in kmeans generation.
 #' @return returns a logical vector of prey catch attempts at 1 Hz frequency. 
 #' Value is TRUE if the record belong to prey catch attempt FALSE otherwise.
 #' @import data.table signal RcppRoll
+#' @author Yves Le Bras, Samantha Cox
+#' @references Viviant, M., Trites, A. W., Rosen, D. A. S., Monestiez, P. and Guinet, C. 
+#' #(2010). Prey capture attempts can be detected in Steller sea lions 
+#' and other marine predators using accelerometers. Polar Biol 33, 713–719.
 #' @export
 #' @keywords raw_processing
-prey_catch_attempts <- function(x, fs = 16, fc = 2.64) {
+prey_catch_attempts <- function(x, fs = 16, fc = 2.64, w = 1.5, grp = NULL, n_days = NULL) {
   stopifnot(require("data.table"))
   stopifnot(require("signal"))
   stopifnot(require("RcppRoll"))
-  # Generate Butterworth filter 
-  # Critical frequencies of the filter: f_cutoff / (f_sampling/2)
-  bf_pca <- signal::butter(3, W = fc / (0.5*fs), type = 'high')
-  
-  # Apply filter
   if (!is.data.table(x)) x <- data.table(x, key = "time")
+  
+  # Cut time into groups of "n_days" each
+  time.bak <- copy(x$time)
+  if (!is.null(n_days)) {
+    days <- as.numeric(time.bak - time.bak[1]) / (24*3600)
+    n_day <- max(days)
+    n_bins <- n_day %/% n_days + ((n_day %% n_days) != 0)
+    brks <- seq(0, n_bins) * n_days
+    time_grp <- .bincode(days, breaks = brks, right = FALSE, include.lowest = TRUE)
+    rm(days, n_days, n_bins, brks)
+  }
+  
+  # Butterworth filter: Critical frequencies of the filter: f_cutoff / (f_sampling/2)
+  bf_pca <- signal::butter(3, W = fc / (0.5 * fs), type = 'high')
+  # Apply filter
   .f <- function(x) as.numeric(signal::filtfilt(bf_pca, x))
   x <- x[ , 2:4 := lapply(.SD, .f), .SDcols = 2:4]
   gc()
   
-  # 1 s fixed window standard deviation + aggregate data to 1 Hz
-  x <- x[ , lapply(.SD, sd, na.rm = TRUE), by = time]
-  # In case of NAs set ACC to zero
-  nas <- lapply(x[ , 2:4, with = FALSE], is.na)
+  # Handle missing values
+  nas <- lapply(x[, 2:4, with = FALSE], is.na)
   nas_vector <- Reduce("|", nas)
   if (any(nas_vector)) {
-    warning("NAs found and replaced by 0. NA proportion:", mean(nas_vector))
-    x$ax[nas$ax] <- 0
-    x$ay[nas$ay] <- 0
-    x$az[nas$az] <- 0
+    warning("NAs found and replaced by 0. NA proportion:", 
+            round(mean(nas_vector), digits = 4))
+    x$ax[nas$ax] <- x$ay[nas$ay] <- x$az[nas$az] <- 0
+  }
+  gc()
+ 
+  # Apply rolling standard deviation
+  .f <- function(x) roll_sd(x, fs * w, fill = 0)
+  if (is.null(grp)) {
+    x <- x[, `:=`(2:4, lapply(.SD, .f)), .SDcols = 2:4]
+  } else {
+    x <- x[, `:=`(2:4, lapply(.SD, .f)), by = grp, .SDcols = 2:4]
   }
   gc()
   
-  # 5 s moving window standard deviation
-  .f <- function(x) c(0,0,roll_sd(x, 5),0,0)
-  x <- x[ , 2:4 := lapply(.SD, .f), .SDcols = 2:4]
-  gc()
-  
-  # kmean clutering: "high" = TRUE vs "low" = FALSE
+  # Apply 2-means clustering to the standard deviation signal 
   .f <- function(x) { 
     km_mod <- kmeans(x, 2)
     high_state <- which.max(km_mod$centers)
     as.logical(km_mod$cluster == high_state)
   }
-  x <- x[ , 2:4 := lapply(.SD, .f), .SDcols = 2:4]
+  if (is.null(n_days)) {
+    x <- x[, `:=`(2:4, lapply(.SD, .f)), .SDcols = 2:4]
+  } else {
+    x <- x[, `:=`(2:4, lapply(.SD, .f)), by = time_grp, .SDcols = 2:4]
+  }
   
-  # Aggregate and return to data.frame
-  # records classified as PCA if the three axis are simultaneously in high state
-  Reduce("&", x[ , time := NULL])
+  # Aggregate to 1 Hz. Rule: classify a second as a PCA if at least one TRUE
+  x <- x[, lapply(.SD, any), by = time, .SDcols = 2:4]
+  
+  # Classify obs as PCA if the three axis are simultaneously in high state
+  Reduce("&", x[, `:=`(time, NULL)])
 }
 
 #' Compute swimming effort
