@@ -137,73 +137,101 @@ broadness_index <- function(x = ind(), time_col = 1) {
   btt.dur / dv.dur
 }
 
-#' Compute the time-at-depth index (TAD) of a dive
+#' Compute the Time Allocation at Depth (TAD) index of a dive
 #' 
-#' @param x input data corresponding to a dive or a \code{ses} object. 
-#' Can be a numeric vector of depth 
-#' records (\code{\link{time_at_depth.default}}), a subset of a \code{tdr} table 
-#' (\code{\link{time_at_depth.tdr}}) or a \code{bsm} object 
-#' (\code{\link{time_at_depth.bsm}}).
-#' @param depth_col a numeric or a character indicating which column of the TDR 
-#' table stores the depth records.
-#' @param ... for S3 methods compatibility.
-#' @details The index ranges between 0.5 (\code{"V"} shaped dive) to 1 
-#' (\code{"U"}/square shaped dive).
+#' @param x input data. Can be a numeric vector of depth records 
+#' (then sampling frequency should be provided), a data frame with time and depth 
+#' as columns 1 & 2 or some \code{bsm}/\code{tdr}/\code{ses} objects.
+#' @param fs Sampling frequency (in Hz). Optional if a full time sequence is provided.
+#' @param vs Maximum vertical speed achievable.
+#' @param ... \code{na.rm} or other arguments (mainly for S3 methods compatibility).
+#' @details The index takes values from 0 for a dive where the maximum of time was spent
+#'  at the minimum depth, to 0.5 for \code{"V"} shaped dives and 1 
+#' for \code{"U"} shaped dives.
+#' \code{"ses"} and \code{"tdr"} methods assume that time and depth information 
+#' respectively occupy the first and second columns of the \code{tdr} tables.
+#' @references Fedak, M. A., Lovell, P. and Grant, S. M. (2001). Two Approaches 
+#' to Compressing and Interpreting Time-Depth Information as as Collected by 
+#' Time-Depth Recorders and Satellite-Linked Data Recorders. 
+#' Marine Mammal Science 17, 94--110.
 #' @export
 #' @examples 
 #' data(exses)
 #' bsm_6pts <- tdrply(brokenstick, 1:2, obj = exses)
-#' # These 3 lines return the exact same result
-#' tad_highres <- tdrply(time_at_depth, 2, obj = exses)
-#' tad_highres <- tdrply(time_at_depth, 1:2, obj = exses)
-#' tad_highres <- sapply(bsm_6pts, time_at_depth) # because the "data" slot is used
-#' exses$stat$tad <- tad_highres <- time_at_depth(exses)
-#' 
+
+#' # These 4 lines return the same result
+#' tad_highres <- tdrply(time_at_depth, 2, obj = exses, vs = 2, fs = 1)
+#' tad_highres <- tdrply(time_at_depth, 1:2, obj = exses, vs = 2)
+#' tad_highres <- sapply(bsm_6pts, time_at_depth, vs = 2) # "data" slot is used
+#' exses$stat$tad <- tad_highres <- time_at_depth(exses, vs = 2)
 #' # When the "data" slot is not available
-#' tad_lowres <- sapply(eco.mem(bsm_6pts), time_at_depth) # data slot is not used
+#' tad_lowres <- sapply(eco.mem(bsm_6pts), time_at_depth, vs = 2) # "data" slot is not used
+#' 
 #' plot(tad_highres, tad_lowres) ; abline(0, 1, col = "red", lwd = 3)
 #' plot(tad ~ time, exses$stat)
-time_at_depth <- function(x, ...) {
+time_at_depth <- function(x, vs = Inf, fs = NULL, ...) {
   UseMethod("time_at_depth")
 }
 
 #' @rdname time_at_depth
 #' @inheritParams time_at_depth
 #' @export
-time_at_depth.default <-  function(x, ...) {
-  dp <- diff(range(as.numeric(x), na.rm = TRUE))
-  mean(x - min(x, na.rm = TRUE), na.rm = TRUE) / dp
-}
-
-#' @rdname time_at_depth
-#' @inheritParams time_at_depth
-#' @export
-time_at_depth.tdr <- function(x, depth_col = "depth", ...) {
-  time_at_depth.default(x[ , depth_col])
-}
-
-#' @rdname time_at_depth
-#' @inheritParams time_at_depth
-#' @export
-time_at_depth.bsm <- function(x, ...) {
-  if ("data" %in% names(x)) {
-    out <- time_at_depth.default(x$data[ , 2])
-  } else {
-    max(x$pts.no) >= 2 || stop("At least 3 breakpoints are needed to get a realistic TAD index.")
-    dt <- diff(range(as.numeric(x$pts.x), na.rm = TRUE))
-    dp <- diff(range(as.numeric(x$pts.y), na.rm = TRUE))
-    tm <- seq(min(x$pts.x), max(x$pts.x), by = 1)
-    dpth <- predict(x, newdata = tm)
-    out <- sum(dpth) / (dp * dt)
+time_at_depth.default <-  function(x, vs = Inf, fs = NULL, ...) {
+  # Check that time information can be obtained from input data
+  if (is.null(fs)) {
+    if (!is.recursive(x) & !is.infinite(vs)) stop("You must provide sampling frequency.")
+    else fs <- time_reso(x[ , 1], type = "frequence")
   }
-  out
+  
+  # Format x
+  if (is.recursive(x)) x <- x[ , 2]
+  x <- as.numeric(x) - min(x, ...)
+  
+  # Compute TAD according to vs
+  if (is.infinite(vs)) {
+    TAD <- mean(x, ...) / max(x, ...)
+  } else {
+    max_depth   <- max(x, ...)
+    tot_time    <- length(x) * fs
+    travel_time <- 2 * max_depth / vs
+    travel_area <- travel_time / 2 * max_depth
+    max_area    <- travel_area + (tot_time - travel_time) * max_depth
+    actual_area <- sum(x, ...) 
+    TAD <- (actual_area - travel_area) / (max_area - travel_area)
+  }
+  
+  TAD %bw% c(0,1) || warning("TAD exceeded 1: Maximun vertical speed 'vs' may be erroneous.")
+  TAD
 }
 
 #' @rdname time_at_depth
 #' @inheritParams time_at_depth
 #' @export
-time_at_depth.ses <- function(x = ind(), depth_col = 2, ...) {
-  tdrply(time_at_depth.default, 2, obj = x)
+time_at_depth.tdr <- function(x, vs = Inf, ...) {
+  time_at_depth.default(x[ , 1:2], vs = vs, ...)
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.bsm <- function(x, vs = Inf, ...) {
+  if ("data" %in% names(x)) {
+    TAD <- time_at_depth.default(x$data, vs = vs, ...)
+  } else {
+    max(x$pts.no) >= 4 || stop("At least 4 breakpoints are needed to get an informative TAD index.")
+    tm <- seq(min(x$pts.x), max(x$pts.x), by = 1)
+    HR_data <- data.frame(time = tm, depth = predict(x, tm))
+    TAD <- time_at_depth.default(HR_data, vs = vs, fs = 1, ...)
+  }
+  
+  TAD
+}
+
+#' @rdname time_at_depth
+#' @inheritParams time_at_depth
+#' @export
+time_at_depth.ses <- function(x = ind(), vs = Inf, ...) {
+  tdrply(time_at_depth.default, 1:2, obj = x, vs = vs, ...)
 }
 
 #' Count/Extract wiggles in 2D dataset.
