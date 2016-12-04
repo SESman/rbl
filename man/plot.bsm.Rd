@@ -5,8 +5,8 @@
 \title{Plot brokenstick models}
 \usage{
 \method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
-  add = FALSE, col = (add || data) + 1, enumerate = FALSE, data = FALSE,
-  ...)
+  add = FALSE, col = 1, col.pts = col, enumerate = FALSE,
+  data = FALSE, ...)
 }
 \arguments{
 \item{x}{\code{bsm} object to plot, typically result from \code{\link{brokenstick}} 
@@ -23,6 +23,8 @@ Here y1 > y2 and leads to a "reversed axis".}
 \item{add}{If true add the plot to the already existing plot.}
 
 \item{col}{A specification for the default plotting color.}
+
+\item{col.pts}{Color of the breakpoints (can be of length > 1).}
 
 \item{enumerate}{A switch to indicate if the iteration number of points should 
 be added to the plot.}
@@ -42,7 +44,10 @@ Require \code{eco.mem <= 4} (see \code{\link{bsmfit}}).
 data(exses)
 dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 bsm <- brokenstick(dv) 
-plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
+plot(bsm, data = TRUE, enumerate = TRUE)
+
+# Similar (but plot.tdr draws POSIXct on x axis while plot.bsm draws numerics)
+plot(dv) 
 plot(bsm, add = TRUE, enumerate = TRUE)
 }
 \seealso{

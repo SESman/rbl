@@ -403,6 +403,7 @@ coef.bsm <- function(object, ...) {
 #' @param ylim the y limits (y1, y2) of the plot. 
 #' Here y1 > y2 and leads to a "reversed axis".
 #' @param col A specification for the default plotting color.
+#' @param col.pts Color of the breakpoints (can be of length > 1). 
 #' @param enumerate A switch to indicate if the iteration number of points should 
 #' be added to the plot.
 #' @param data Should the data used to fit the BSM be plotted as well ?
@@ -416,11 +417,21 @@ coef.bsm <- function(object, ...) {
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 #' bsm <- brokenstick(dv) 
-#' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
+#' plot(bsm, data = TRUE, enumerate = TRUE)
+#' 
+#' # Similar (but plot.tdr draws POSIXct on x axis while plot.bsm draws numerics)
+#' plot(dv) 
 #' plot(bsm, add = TRUE, enumerate = TRUE)
 plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(xy$y)), 
-                     add = FALSE, col = (add || data) + 1, 
+                     add = FALSE, col = 1, col.pts = col, 
                      enumerate = FALSE, data = FALSE, ...) {
+  # Argument checking in relation to plot type & colors
+  type %in% c("b", "l", "p") || stop("Only types 'p', 'l', and 'b' are supported.")
+  length(col) == 1 || stop("Only 'col.pts' can have a length > 1")
+  
+  # When available, get the names of xy variables
+  nms <- "if"("data" %in% names(x), names(x$data), c("bsm x", "bsm y"))
+  
   # Generate BSM abstracted profile
   y <- predict(x, newdata = x$pts.x)
   valid_pred <- is.finite(y) # May occur because of infinite bsm coefficients.
@@ -428,11 +439,22 @@ plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
   xy <- xy.coords(x$pts.x[valid_pred], y[valid_pred], "x", "y")
   
   # Draw it
-  if (add) lines(xy, type = type, lwd = lwd, col = col, ...)
-  else plot(xy, type = type, lwd = lwd, ylim = ylim, col = col, ...)
+  if (length(col.pts) > 1) {
+    type %in% c("b", "p") || stop("Length of 'col.pts' should be 1 when 'type' = 'l'.")
+    if (!add) plot(xy, type = "n", ylim = ylim, xlab = nms[1], ylab = nms[2], ...)
+    Map(points, x = xy$x, y = xy$y, lwd = lwd, col = col.pts, ...)
+    if (type == "b") lines(xy, type = "b", pch = NA, lwd = lwd, col = col, ...)
+  } else {
+    if (add) {
+      lines(xy, type = type, lwd = lwd, col = col, ...)
+    } else {
+      plot(xy, type = type, lwd = lwd, ylim = ylim, col = col, 
+           xlab = nms[1], ylab = nms[2], ...)
+    }
+  }
   
   # If break points numbering is requested
-  if (enumerate) text(xy, labels = x$pts.no, adj = c(1.5, 1.5), col = col, cex = .8)
+  if (enumerate) text(xy, labels = x$pts.no, adj = c(1.5, 1.5), col = col.pts, cex = .8)
   
   # Hi-Res data can be added if requested and available
   if (data) {
