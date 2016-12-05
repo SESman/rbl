@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{bsm}(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
   add = FALSE, col = 1, col.pts = col, enumerate = FALSE,
-  data = FALSE, ...)
+  data = FALSE, xlab = NULL, ylab = NULL, ...)
 }
 \arguments{
 \item{x}{\code{bsm} object to plot, typically result from \code{\link{brokenstick}} 
@@ -31,6 +31,10 @@ be added to the plot.}
 
 \item{data}{Should the data used to fit the BSM be plotted as well ?}
 
+\item{xlab}{A title for the x axis: see \code{\link{title}}.}
+
+\item{ylab}{A title for the y axis: see \code{\link{title}}.}
+
 \item{...}{Further graphical parameters (see \code{\link{par}}) may also be 
 supplied as arguments.}
 }
@@ -46,7 +50,7 @@ dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 bsm <- brokenstick(dv) 
 plot(bsm, data = TRUE, enumerate = TRUE)
 
-# Similar (but plot.tdr draws POSIXct on x axis while plot.bsm draws numerics)
+# Similar (BUT plot.tdr draws a POSIXct x axis while plot.bsm draws a numeric axis)
 plot(dv) 
 plot(bsm, add = TRUE, enumerate = TRUE)
 }

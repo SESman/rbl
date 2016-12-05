@@ -407,6 +407,8 @@ coef.bsm <- function(object, ...) {
 #' @param enumerate A switch to indicate if the iteration number of points should 
 #' be added to the plot.
 #' @param data Should the data used to fit the BSM be plotted as well ?
+#' @param xlab A title for the x axis: see \code{\link{title}}.
+#' @param ylab A title for the y axis: see \code{\link{title}}.
 #' @param ... Further graphical parameters (see \code{\link{par}}) may also be 
 #' supplied as arguments.
 #' @details Require \code{eco.mem <= 4} (see \code{\link{bsmfit}}).
@@ -419,18 +421,22 @@ coef.bsm <- function(object, ...) {
 #' bsm <- brokenstick(dv) 
 #' plot(bsm, data = TRUE, enumerate = TRUE)
 #' 
-#' # Similar (but plot.tdr draws POSIXct on x axis while plot.bsm draws numerics)
+#' # Similar (BUT plot.tdr draws a POSIXct x axis while plot.bsm draws a numeric axis)
 #' plot(dv) 
 #' plot(bsm, add = TRUE, enumerate = TRUE)
 plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(xy$y)), 
                      add = FALSE, col = 1, col.pts = col, 
-                     enumerate = FALSE, data = FALSE, ...) {
+                     enumerate = FALSE, data = FALSE, 
+                     xlab = NULL, ylab = NULL, ...) {
   # Argument checking in relation to plot type & colors
   type %in% c("b", "l", "p") || stop("Only types 'p', 'l', and 'b' are supported.")
   length(col) == 1 || stop("Only 'col.pts' can have a length > 1")
   
-  # When available, get the names of xy variables
-  nms <- "if"("data" %in% names(x), names(x$data), c("bsm x", "bsm y"))
+  # If xlab/ylab NULL, get the names of xy variables if available
+  nms <- c(
+    xlab %else% "if"("data" %in% names(x), names(x$data)[1], "bsm x"), 
+    ylab %else% "if"("data" %in% names(x), names(x$data)[2], "bsm y")
+    )
   
   # Generate BSM abstracted profile
   y <- predict(x, newdata = x$pts.x)
