@@ -191,12 +191,10 @@ time_at_depth.default <-  function(x, vs = Inf, fs = NULL, ...) {
   if (is.infinite(vs)) {
     TAD <- mean(x, ...) / max(x, ...)
   } else {
-    max_depth   <- max(x, ...)
-    tot_time    <- length(x) * fs
-    travel_time <- 2 * max_depth / vs
-    travel_area <- travel_time / 2 * max_depth
-    max_area    <- travel_area + (tot_time - travel_time) * max_depth
-    actual_area <- sum(x, ...) 
+    actual_area <- sum(x, ...) / fs # Aobs
+    max_depth   <- max(x, ...)      # D
+    travel_area <- max_depth^2 / vs # At = 2 * (Tt * D) / 2 = D / vs * D = D^2 /vs
+    max_area    <- (length(x) * fs) * max_depth - travel_area # Am = T*D - At
     TAD <- (actual_area - travel_area) / (max_area - travel_area)
   }
   
