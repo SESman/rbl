@@ -26,8 +26,7 @@ do not belong to a stick.
 data(exses)
 dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv) 
-plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
-plot(bsm, add = TRUE, enumerate = TRUE)
+plot(bsm, data = TRUE, enumerate = TRUE)
 
 ypred <- predict(bsm, newdata = xpred <- sample(dv$time, 10))
 points(xpred, ypred, col = 3, pch = 19)

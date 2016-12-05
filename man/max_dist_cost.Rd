@@ -27,7 +27,8 @@ determine if the number of points is optimized: the cost function value being
 minimized by the optimal set of parameters.
 }
 \details{
-\code{max_dist_cost} In this function the statistic is the maximun distance between an 
+\code{max_dist_cost} In this function the statistic is the maximun 
+distance between an 
 observation and its fitted value. Hence the function constantly decrease with 
 increasing number of point in the model and a threshold must be provided along 
 with this function to avoid infinite looping. Yet, the pros of this cost function 

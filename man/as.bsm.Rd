@@ -38,7 +38,9 @@ bsm <- brokenstick(dv)
 as.bsm(bsm$pts.x, bsm$pts.y)
 as.bsm(bsm$pts.x, bsm$pts.y, residuals = "dummy")
 as.bsm(bsm)
+\dontrun{
 is.bsm(bsm)
+}
 }
 \references{
 \url{http://www.smru.st-andrews.ac.uk/protected/specs/DatabaseFieldDescriptions.pdf}

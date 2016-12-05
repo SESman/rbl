@@ -25,9 +25,17 @@ Update and Re-fit a brokenstick model
 data(exses)
 dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv) 
-length(bsm$pts)
-length(update(bsm, 5)$pts)
-length(update(bsm, 7)$pts)
+length(bsm$pts.x)
+
+length(update(bsm, 5)$pts.x)
+length(update(bsm, 7)$pts.x)
+
+\dontrun{
+# low resolution
+lr_bsm <- eco.mem(bsm)
+length(update(lr_bsm, 5)$pts.x)
+length(update(lr_bsm, 7)$pts.x)
+}
 }
 \keyword{brokenstick}
 \keyword{internal}

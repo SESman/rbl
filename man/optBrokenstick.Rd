@@ -17,9 +17,9 @@ be a list of \code{x} and \code{y} data as returned by \code{\link{xy.coords}}.}
 the minimum. If provided the search of a local minimum in the cost function is 
 abandoned.}
 
-\item{cost}{The cost function to use. Two included in the package 
-\code{\link{dist_per_pt_cost}} and \code{\link{max_dist_cost}}. Feel free to use 
-a custom one.}
+\item{cost}{The cost function to use. Some are included in the package such as 
+\code{\link{max_dist_cost}}, \code{\link{dist_per_pt_cost}}, 
+\code{\link{rss_cost}}, \code{\link{dzi_cost}} etc. Feel free to use a custom one.}
 
 \item{npmin}{Minimun number of points.}
 
@@ -45,12 +45,18 @@ cost function can be used to determine the optimal number of points.
 }
 \examples{
 data(exses)
-dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
-plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
-bsm <- optBrokenstick(dv)
-plot(bsm, add = TRUE)
-bsm <- optBrokenstick(dv, threshold = 20, cost = max_dist_cost) 
-plot(bsm, add = TRUE, col = 'blue', enumerate = TRUE)
+dv <- tdrply(identity, 1:2, no = 90, obj = exses)[[1]]
+
+bsm_6p <- brokenstick(dv, npts = 6)
+plot(bsm_6p, data = TRUE)
+
+bsm_30m <- optBrokenstick(dv, threshold = 30, cost = max_dist_cost) 
+plot(bsm_30m, add = TRUE, col = 2, lty = 2, enumerate = TRUE, 
+     col.pts = (bsm_30m$pts.no > 5) + 1)
+
+bsm_5m <- optBrokenstick(dv, threshold = 5, cost = max_dist_cost) 
+plot(bsm_5m, add = TRUE, col = 3, lty = 3, enumerate = TRUE, 
+     col.pts = (bsm_5m$pts.no > max(bsm_30m$pts.no)) + (bsm_5m$pts.no > 5) + 1)
 }
 \seealso{
 \code{\link{brokenstick}} and \code{\link{predict.bsm}}, \code{\link{residuals.bsm}}, 

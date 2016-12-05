@@ -217,9 +217,17 @@ brokenstick.formula <- function(x, y = NULL, npts = 6, start = NULL,
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
-#' length(bsm$pts)
-#' length(update(bsm, 5)$pts)
-#' length(update(bsm, 7)$pts)
+#' length(bsm$pts.x)
+#' 
+#' length(update(bsm, 5)$pts.x)
+#' length(update(bsm, 7)$pts.x)
+#' 
+#' \dontrun{
+#' # low resolution
+#' lr_bsm <- eco.mem(bsm)
+#' length(update(lr_bsm, 5)$pts.x)
+#' length(update(lr_bsm, 7)$pts.x)
+#' }
 update.bsm <- function(object, npts, allow.dup = FALSE, ...) {
   # Check if an update is needed
   np <- length(object$pts.x)
@@ -290,8 +298,7 @@ update.bsm <- function(object, npts, allow.dup = FALSE, ...) {
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
-#' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
-#' plot(bsm, add = TRUE, enumerate = TRUE)
+#' plot(bsm, data = TRUE, enumerate = TRUE)
 #' 
 #' ypred <- predict(bsm, newdata = xpred <- sample(dv$time, 10))
 #' points(xpred, ypred, col = 3, pch = 19)
@@ -492,7 +499,7 @@ plot.bsm <- function(x, type = "b", lwd = 2, ylim = rev(range(xy$y)),
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj= exses)[[1]]
 #' bsm <- brokenstick(dv)
-#' plot(residuals(bsm)) ; abline(v = bsm$pts, h = 0)
+#' plot(residuals(bsm)) ; abline(v = bsm$pts, h = 0, col = "grey")
 residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) {
   # If "newdata" not provided, return residual slot else make new prediction
   if (!missing(newdata)) {
@@ -523,9 +530,9 @@ residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) 
 #' @param threshold A threshold value for the cost function to be used instead of 
 #' the minimum. If provided the search of a local minimum in the cost function is 
 #' abandoned.
-#' @param cost The cost function to use. Two included in the package 
-#' \code{\link{dist_per_pt_cost}} and \code{\link{max_dist_cost}}. Feel free to use 
-#' a custom one.
+#' @param cost The cost function to use. Some are included in the package such as 
+#' \code{\link{max_dist_cost}}, \code{\link{dist_per_pt_cost}}, 
+#' \code{\link{rss_cost}}, \code{\link{dzi_cost}} etc. Feel free to use a custom one.
 #' @param npmin Minimun number of points.
 #' @param npmax Maximum number of points.
 #' @return Same as \code{\link{brokenstick}} with the value of the cost function.
@@ -537,12 +544,18 @@ residuals.bsm <- function(object, type = c("normal", "absolute"), newdata, ...) 
 #' @keywords brokenstick
 #' @examples
 #' data(exses)
-#' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
-#' plot(depth ~ time, dv, ylim = rev(range(dv$depth)), type = 'l')
-#' bsm <- optBrokenstick(dv)
-#' plot(bsm, add = TRUE)
-#' bsm <- optBrokenstick(dv, threshold = 20, cost = max_dist_cost) 
-#' plot(bsm, add = TRUE, col = 'blue', enumerate = TRUE)
+#' dv <- tdrply(identity, 1:2, no = 90, obj = exses)[[1]]
+#' 
+#' bsm_6p <- brokenstick(dv, npts = 6)
+#' plot(bsm_6p, data = TRUE)
+#' 
+#' bsm_30m <- optBrokenstick(dv, threshold = 30, cost = max_dist_cost) 
+#' plot(bsm_30m, add = TRUE, col = 2, lty = 2, enumerate = TRUE, 
+#'      col.pts = (bsm_30m$pts.no > 5) + 1)
+#' 
+#' bsm_5m <- optBrokenstick(dv, threshold = 5, cost = max_dist_cost) 
+#' plot(bsm_5m, add = TRUE, col = 3, lty = 3, enumerate = TRUE, 
+#'      col.pts = (bsm_5m$pts.no > max(bsm_30m$pts.no)) + (bsm_5m$pts.no > 5) + 1)
 optBrokenstick <- function(x, y = NULL, threshold, cost = max_dist_cost, 
                            npmin = 2, npmax = Inf, start = NULL, na.action, ...) {
   # Check inputs consitency
@@ -591,12 +604,11 @@ optBrokenstick <- function(x, y = NULL, threshold, cost = max_dist_cost,
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 #' bsm <- brokenstick(dv) 
-#' max_residual(bsm, 5)
+#' max_residual(bsm, iter = 5)
 #' 
 #' \dontrun{
-#' bsm <- brokenstick(dv, eco.mem = 4) 
-#' max_residual(bsm, 5) # error
-#' max_residual(bsm, 4)
+#' max_residual(eco.mem(bsm), iter = 5) # error
+#' max_residual(eco.mem(bsm), iter = 4)
 #' }
 max_residual <- function(x, iter = NULL, type = c("normal", "absolute")) {
   # Check inputs and set iter to default value when necessary
@@ -656,10 +668,9 @@ max_residual <- function(x, iter = NULL, type = c("normal", "absolute")) {
 #'   \item pts.x, pts.y, pts.no Breakpoints information inherited from \code{x}.
 #'   \item data The raw data of input BSM when available.
 #' }
-#' @references
-#' Photopoulou, T., Lovell, P., Fedak, M. A., Thomas, L. and Matthiopoulos, J. (2015). 
-#' Efficient abstracting of dive profiles using a broken-stick model. 
-#' Methods Ecol Evol 6, 278-288. Github repo: https://github.com/theoniphotopoulou/brokenstickmodel.git
+#' @references Photopoulou, T., Lovell, P., Fedak, M. A., Thomas, L. and 
+#' Matthiopoulos, J. (2015). Efficient abstracting of dive profiles using a 
+#' broken-stick model. Methods Ecol Evol 6, 278-288. 
 #' @examples 
 #' data(exses)
 #' dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
@@ -726,7 +737,8 @@ dive_zone_index <- function(x, iter = NULL, n = NULL) {
 #'
 #' @param object Object of class inheriting from "\code{bsm}".
 #' @return A statistic to minimize. 
-#' @details \code{max_dist_cost} In this function the statistic is the maximun distance between an 
+#' @details \code{max_dist_cost} In this function the statistic is the maximun 
+#' distance between an 
 #' observation and its fitted value. Hence the function constantly decrease with 
 #' increasing number of point in the model and a threshold must be provided along 
 #' with this function to avoid infinite looping. Yet, the pros of this cost function 
@@ -884,7 +896,9 @@ as.bsm <- function(pts.x, pts.y = NULL, ...) {
 #' @export
 #' @keywords internal brokenstick
 #' @examples 
+#' \dontrun{
 #' is.bsm(bsm)
+#' }
 is.bsm <- function(x) is(x, "bsm")
 
 #' Print method for bsm objects
@@ -953,27 +967,31 @@ plot.dzi <- function(x, dz_col = "lightblue", dz_border = "blue", enumerate = TR
 #' \code{\link{brokenstick}} function. The default \code{n = 4} returns 
 #' abstracted dive profiles as if they were obtained from CTD-SRDL tags.
 #' @param type A character indicating how the slots are to be handled. 
-#' \code{"ignore"} put aside the solot (rename) so they are ignored by other 
-#' \code{bsm} processing functions but do not remove them. \code{"delete"} delete 
+#' \code{"ignore"} puts aside the slots (renaming them) so they are ignored by other 
+#' \code{bsm} processing functions but does not remove them. \code{"delete"} delete 
 #' them so that less memory is used to store the object. 
 #' \code{"reset"} reverse the \code{"ignore"} operation.
 #' @export
 #' @keywords brokenstick
 #' @examples 
 #' data(exses)
-#' bsm <- tdrply(brokenstick, 1:2, obj = exses)
+#' bsm <- tdrply(brokenstick, 1:2, no = 100, obj = exses)[[1]]
 #' 
-#' x <- eco.mem(bsm[[1]], type = "ignore")
-#' try(predict(x)) # error
-#' x <- eco.mem(x, type = "reset")
-#' predict(x) # return fitted values of sampled time stamps
-#' identical(bsm[[1]], x)
+#' bsm <- eco.mem(bsm, type = "ignore")
+#' try(predict(bsm)) # error: required slots treated as absent
+#' bsm <- eco.mem(bsm, type = "reset")
+#' predict(bsm) # slots were restored
+#' identical(bsm, x)
 #' 
-#' object.size(x)
-#' object.size(eco.mem(x, type = "delete"))
+#' # Use type = "delete" to save some memory
+#' lr_bytes <- object.size(eco.mem(bsm, type = "delete")) 
+#' hr_bytes <- object.size(bsm)
+#' paste0(round(100 * as.numeric(lr_bytes / hr_bytes), digits = 2), "%")
 #' 
 #' # Works on lists
-#' bsm <- eco.mem(bsm, type = "ignore")
+#' bsm <- eco.mem(tdrply(brokenstick, 1:2, no = 100:103, obj = exses), type = "delete")
+#' # Same as
+#' bsm <- tdrply(brokenstick, 1:2, no = 100:103, obj = exses, eco.mem = 4)
 eco.mem <- function(x, n = 4, type = c("ignore", "delete", "reset")) {
   if (is.bsm(x)) {
     if (n > 4) stop('"n" must be between 0 and 4.')
@@ -984,7 +1002,7 @@ eco.mem <- function(x, n = 4, type = c("ignore", "delete", "reset")) {
       nms[-n_subset] <- paste0("ignored.", nms[-n_subset])
       out <- setNames(x, nms)
     } else if (type == "delete") {
-      out <- as.bsm(x[n_subset])
+      out <- do.call(as.bsm, x[n_subset])
     } else if (type == "reset") {
       nms <- names(x)
       nms[-n_subset] <- gsub("ignored\\.", "", nms[-n_subset])

@@ -24,12 +24,11 @@ Get the maximun residual of a BSM at a given iteration
 data(exses)
 dv <- tdrply(identity, 1:2, no = 100, obj = exses)[[1]]
 bsm <- brokenstick(dv) 
-max_residual(bsm, 5)
+max_residual(bsm, iter = 5)
 
 \dontrun{
-bsm <- brokenstick(dv, eco.mem = 4) 
-max_residual(bsm, 5) # error
-max_residual(bsm, 4)
+max_residual(eco.mem(bsm), iter = 5) # error
+max_residual(eco.mem(bsm), iter = 4)
 }
 }
 \keyword{brokenstick}

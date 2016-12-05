@@ -56,9 +56,9 @@ str(dzi)
 plot(dzi)
 }
 \references{
-Photopoulou, T., Lovell, P., Fedak, M. A., Thomas, L. and Matthiopoulos, J. (2015). 
-Efficient abstracting of dive profiles using a broken-stick model. 
-Methods Ecol Evol 6, 278-288. Github repo: https://github.com/theoniphotopoulou/brokenstickmodel.git
+Photopoulou, T., Lovell, P., Fedak, M. A., Thomas, L. and 
+Matthiopoulos, J. (2015). Efficient abstracting of dive profiles using a 
+broken-stick model. Methods Ecol Evol 6, 278-288.
 }
 \keyword{brokenstick}
 
