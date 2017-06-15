@@ -1,5 +1,7 @@
 ## This is a R package to help working with biologging data, focused on diving predators.
 
+[![DOI](https://zenodo.org/badge/36793176.svg)](https://zenodo.org/badge/latestdoi/36793176)
+
 Most of the functions in this package were coded to work with Southern elephant seal data but they must be useful for other diving predator such as penguins, turtles, other seals etc... Let me know your study species and the settings you use.
 
 ### Motivation
